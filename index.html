@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="LinkReaper — كاشف الروابط المشبوهة | URL Safety Checker | Détecteur de liens dangereux">
+<meta name="theme-color" content="#060608">
+<title>LinkReaper — URL Safety Checker</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Tajawal:wght@300;400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ VARIABLES ═══════════════ */
+:root{
+  --blood:#9B1B1B;--neon:#FF2244;--dark:#060608;--panel:#0d0d12;
+  --border:rgba(180,20,40,0.35);--green:#00FF88;--yellow:#FFB300;
+  --text:#E0D5D5;--dim:#6B5B5B;--dim2:#9B8B8B;
+  --shadow-red:0 0 20px rgba(255,34,68,0.4);
+  --shadow-green:0 0 20px rgba(0,255,136,0.4);
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--dark);color:var(--text);
+  font-family:'Tajawal',sans-serif;
+  overflow-x:hidden;min-height:100vh;
+}
+
+/* ═══════════════ BACKGROUND ═══════════════ */
+.bg-canvas{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -5%,rgba(110,0,18,0.45),transparent 60%),
+    radial-gradient(ellipse 35% 35% at 95% 95%,rgba(60,0,10,0.3),transparent 60%),
+    var(--dark);
+}
+.bg-scanlines{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
+}
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(140,0,20,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(140,0,20,0.05) 1px,transparent 1px);
+  background-size:50px 50px;
+  animation:gridScroll 20s linear infinite;
+}
+@keyframes gridScroll{from{background-position:0 0;}to{background-position:0 50px;}}
+
+/* Particles */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.ptcl{
+  position:absolute;border-radius:50%;
+  background:var(--neon);animation:ptclFloat linear infinite;opacity:0;
+}
+@keyframes ptclFloat{
+  0%{transform:translateY(100vh) translateX(0);opacity:0;}
+  10%{opacity:.4;}90%{opacity:.15;}
+  100%{transform:translateY(-5vh) translateX(15px);opacity:0;}
+}
+
+/* ═══════════════ LANG BAR ═══════════════ */
+#langBar{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  background:rgba(6,6,8,0.96);
+  border-bottom:1px solid var(--border);
+  padding:.45rem .8rem;
+  display:flex;align-items:center;gap:.35rem;
+  overflow-x:auto;scrollbar-width:none;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+#langBar::-webkit-scrollbar{display:none;}
+.lbtn{
+  flex-shrink:0;padding:.28rem .65rem;
+  background:transparent;border:1px solid rgba(155,27,27,0.3);
+  border-radius:5px;color:var(--dim);
+  font-family:'Tajawal',sans-serif;font-size:.74rem;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.lbtn:hover{border-color:var(--neon);color:var(--text);}
+.lbtn.on{background:rgba(255,34,68,0.14);border-color:var(--neon);color:var(--neon);}
+.lsep{width:1px;height:16px;background:var(--border);flex-shrink:0;}
+
+/* ═══════════════ APP SHELL ═══════════════ */
+.app{
+  position:relative;z-index:1;
+  max-width:660px;margin:0 auto;
+  padding:4.8rem 1.1rem 4rem;
+  min-height:100vh;
+}
+
+/* ═══════════════ HEADER ═══════════════ */
+.header{text-align:center;padding:2rem 0 1.4rem;}
+.logo-ring{
+  width:84px;height:84px;border-radius:50%;
+  border:2px solid var(--blood);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto .8rem;position:relative;
+  animation:ringPulse 2.5s ease-in-out infinite;
+  background:radial-gradient(circle,rgba(100,0,15,0.3),transparent 70%);
+}
+.logo-ring::before{
+  content:'';position:absolute;inset:-6px;
+  border-radius:50%;border:1px solid rgba(255,34,68,0.12);
+  animation:ringPulse 2.5s ease-in-out infinite reverse;
+}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,34,68,0.22);}
+  50%{box-shadow:0 0 26px 6px rgba(255,34,68,0.1);}
+}
+.logo-skull{font-size:2.5rem;filter:drop-shadow(0 0 8px rgba(255,34,68,0.55));animation:skullBob 3s ease-in-out infinite;}
+@keyframes skullBob{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+.app-title{
+  font-family:'Creepster',cursive;
+  font-size:clamp(2.2rem,8vw,3.4rem);
+  color:var(--neon);letter-spacing:3px;line-height:1;
+  text-shadow:0 0 14px rgba(255,34,68,0.5),0 0 38px rgba(255,34,68,0.12);
+}
+.app-version{
+  display:inline-block;font-family:'Share Tech Mono',monospace;
+  font-size:.62rem;color:var(--blood);
+  border:1px solid var(--blood);border-radius:4px;
+  padding:.1rem .38rem;margin-top:.3rem;letter-spacing:1px;
+}
+#tagline{font-size:.84rem;color:var(--dim);margin-top:.4rem;letter-spacing:.4px;}
+
+/* ═══════════════ MONSTER ═══════════════ */
+.monster-box{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.2rem;
+  margin:1.1rem 0;display:flex;gap:.85rem;align-items:flex-start;
+  position:relative;overflow:hidden;min-height:68px;
+}
+/* Animated side accent — fixed with proper positioning */
+.monster-box::after{
+  content:'';
+  position:absolute;top:0;width:2px;bottom:0;
+  background:linear-gradient(to bottom,transparent,var(--neon) 50%,transparent);
+  animation:sideGlow 3s ease-in-out infinite;
+  opacity:.7;
+}
+html[dir="rtl"] .monster-box::after{right:0;}
+html[dir="ltr"] .monster-box::after{left:0;}
+@keyframes sideGlow{0%,100%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}}
+
+.mon-avatar{
+  font-size:1.9rem;flex-shrink:0;
+  width:42px;height:42px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,34,68,0.07);
+  border-radius:9px;border:1px solid var(--border);
+  transition:transform .3s;
+}
+.mon-name{font-size:.62rem;color:var(--neon);letter-spacing:2px;margin-bottom:.28rem;font-family:'Share Tech Mono',monospace;}
+#monsterText{font-size:.88rem;line-height:1.7;color:var(--text);min-height:20px;}
+.tcursor{
+  display:inline-block;width:2px;height:12px;
+  background:var(--neon);margin-right:1px;
+  animation:tcBlink .7s ease-in-out infinite;
+  vertical-align:middle;
+}
+@keyframes tcBlink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* ═══════════════ INPUT CARD ═══════════════ */
+.input-card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.2rem;margin-bottom:.9rem;
+}
+#inputLabel{
+  font-size:.72rem;color:var(--dim);
+  margin-bottom:.55rem;display:block;
+  letter-spacing:1px;font-family:'Share Tech Mono',monospace;
+}
+.input-row{display:flex;gap:.45rem;}
+#urlInput{
+  flex:1;padding:.78rem .9rem;
+  background:rgba(0,0,0,0.5);
+  border:1.5px solid rgba(155,27,27,0.4);
+  border-radius:9px;color:var(--text);
+  font-family:'Share Tech Mono',monospace;font-size:.86rem;
+  outline:none;transition:all .25s;
+  direction:ltr;text-align:left;
+}
+#urlInput:focus{
+  border-color:var(--neon);
+  box-shadow:0 0 0 3px rgba(255,34,68,0.1),var(--shadow-red);
+  background:rgba(10,0,5,0.72);
+}
+#urlInput::placeholder{color:#3a2a2a;}
+#scanBtn{
+  padding:.78rem 1.15rem;
+  background:linear-gradient(135deg,var(--blood),#6a0000);
+  border:1.5px solid var(--neon);border-radius:9px;
+  color:#fff;font-family:'Tajawal',sans-serif;
+  font-weight:900;font-size:.92rem;
+  cursor:pointer;white-space:nowrap;
+  letter-spacing:1px;transition:all .18s;
+  min-width:90px;
+}
+#scanBtn:hover{background:linear-gradient(135deg,var(--neon),var(--blood));box-shadow:var(--shadow-red);transform:scale(1.02);}
+#scanBtn:active{transform:scale(.97);}
+#scanBtn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ═══════════════ LOADING ═══════════════ */
+#loadingCard{
+  display:none;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.2rem;margin-bottom:.9rem;
+}
+.lsteps{display:grid;gap:.38rem;margin-bottom:.85rem;}
+.lstep{
+  display:flex;align-items:center;gap:.55rem;
+  font-family:'Share Tech Mono',monospace;font-size:.72rem;
+  color:#3a2a2a;transition:color .25s;
+}
+.lstep.on{color:var(--neon);}
+.lstep.done{color:#2a6a4a;}
+.lstep-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#1a0a0a;border:1px solid #3a1a1a;
+  transition:all .25s;flex-shrink:0;
+}
+.lstep.on .lstep-dot{background:var(--neon);box-shadow:0 0 7px var(--neon);animation:dotPop .5s ease-in-out infinite alternate;}
+.lstep.done .lstep-dot{background:#00AA55;border-color:#00AA55;}
+@keyframes dotPop{from{transform:scale(1);}to{transform:scale(1.5);}}
+.prog-track{height:3px;background:rgba(255,34,68,0.08);border-radius:2px;overflow:hidden;}
+#progressFill{height:100%;background:linear-gradient(90deg,var(--blood),var(--neon));border-radius:2px;width:0%;transition:width .28s ease-out;}
+
+/* ═══════════════ RESULT ═══════════════ */
+#resultCard{
+  display:none;border-radius:var(--radius);
+  padding:1.35rem;margin-bottom:.9rem;
+  animation:cardPop .38s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes cardPop{from{opacity:0;transform:translateY(18px) scale(.95);}to{opacity:1;transform:none;}}
+
+#resultCard.safe{background:rgba(0,52,26,0.2);border:1.5px solid rgba(0,255,136,0.32);}
+#resultCard.warning{background:rgba(52,36,0,0.22);border:1.5px solid rgba(255,179,0,0.32);}
+#resultCard.danger{
+  background:rgba(72,0,10,0.28);border:1.5px solid rgba(255,34,68,0.42);
+  animation:cardPop .3s cubic-bezier(.34,1.56,.64,1),dangerJolt .48s ease-in-out .32s;
+}
+@keyframes dangerJolt{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-5px);}40%{transform:translateX(5px);}
+  60%{transform:translateX(-3px);}80%{transform:translateX(3px);}
+}
+
+.res-header{display:flex;align-items:center;gap:.85rem;margin-bottom:1rem;}
+.res-badge{
+  width:50px;height:50px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;
+}
+#resultCard.safe .res-badge{background:rgba(0,255,136,0.09);border:1px solid rgba(0,255,136,0.22);}
+#resultCard.warning .res-badge{background:rgba(255,179,0,0.09);border:1px solid rgba(255,179,0,0.22);}
+#resultCard.danger .res-badge{background:rgba(255,34,68,0.09);border:1px solid rgba(255,34,68,0.22);}
+
+#resultVerdict{font-family:'Creepster',cursive;font-size:1.45rem;letter-spacing:1px;}
+#resultCard.safe #resultVerdict{color:var(--green);text-shadow:var(--shadow-green);}
+#resultCard.warning #resultVerdict{color:var(--yellow);text-shadow:0 0 14px rgba(255,179,0,0.4);}
+#resultCard.danger #resultVerdict{color:var(--neon);text-shadow:var(--shadow-red);}
+
+#resultDomain{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);margin-top:.18rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+
+.score-row{display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;}
+#scoreNum{font-family:'Share Tech Mono',monospace;font-size:1.25rem;font-weight:bold;min-width:42px;}
+#resultCard.safe #scoreNum{color:var(--green);}
+#resultCard.warning #scoreNum{color:var(--yellow);}
+#resultCard.danger #scoreNum{color:var(--neon);}
+.score-track{flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+#scoreBar{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.34,1.56,.64,1);width:0%;}
+#resultCard.safe #scoreBar{background:linear-gradient(90deg,#005c28,var(--green));}
+#resultCard.warning #scoreBar{background:linear-gradient(90deg,#5c3c00,var(--yellow));}
+#resultCard.danger #scoreBar{background:linear-gradient(90deg,var(--blood),var(--neon));}
+.score-slash{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);min-width:32px;}
+
+#aiVerdict{
+  background:rgba(0,0,0,0.26);border-radius:9px;
+  padding:.85rem .95rem;margin-bottom:1rem;
+  font-size:.86rem;line-height:1.75;font-style:italic;border-right:3px solid;
+}
+html[dir="ltr"] #aiVerdict{border-right:none;border-left:3px solid;}
+#resultCard.safe #aiVerdict{border-color:var(--green);color:#aaffd4;}
+#resultCard.warning #aiVerdict{border-color:var(--yellow);color:#ffe29a;}
+#resultCard.danger #aiVerdict{border-color:var(--neon);color:#ffaab5;}
+
+#checksTitle{font-size:.68rem;color:var(--dim);letter-spacing:2px;margin-bottom:.55rem;font-family:'Share Tech Mono',monospace;}
+#checksGrid{display:grid;gap:.38rem;}
+.ci{
+  display:flex;align-items:center;gap:.55rem;
+  padding:.52rem .82rem;background:rgba(0,0,0,0.2);
+  border-radius:7px;font-size:.8rem;border-right:2px solid;
+}
+html[dir="ltr"] .ci{border-right:none;border-left:2px solid;}
+.ci.chk-ok{border-color:var(--green);}
+.ci.chk-bad{border-color:var(--neon);}
+.ci.chk-warn{border-color:var(--yellow);}
+
+/* Share button */
+.share-row{display:flex;justify-content:flex-end;margin-top:.8rem;}
+.share-btn{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.4rem .85rem;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);border-radius:7px;
+  color:var(--dim2);font-family:'Tajawal',sans-serif;font-size:.78rem;
+  cursor:pointer;transition:all .18s;
+}
+.share-btn:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+
+/* ═══════════════ TIPS ═══════════════ */
+#tipsCard{
+  display:none;
+  background:rgba(55,25,0,0.22);
+  border:1px solid rgba(255,100,0,0.2);
+  border-radius:var(--radius);padding:.85rem 1rem;
+  margin-bottom:.9rem;font-size:.78rem;color:#cc9940;line-height:1.7;
+}
+#tipsCard strong{color:var(--yellow);}
+
+/* ═══════════════ DISCLAIMER ═══════════════ */
+.disclaimer{
+  background:rgba(0,0,0,0.25);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:9px;padding:.7rem .9rem;
+  font-size:.72rem;color:#4a3a3a;line-height:1.6;
+  margin-bottom:.9rem;text-align:center;
+}
+
+/* ═══════════════ AI BANNER ═══════════════ */
+.ai-banner{
+  background:linear-gradient(135deg,rgba(55,0,75,0.28),rgba(18,0,38,0.38));
+  border:1px solid rgba(180,0,255,0.22);
+  border-radius:var(--radius);padding:.95rem 1.1rem;
+  margin-bottom:.9rem;display:flex;gap:.75rem;align-items:flex-start;
+}
+.ai-banner-icon{font-size:1.3rem;flex-shrink:0;margin-top:.08rem;}
+.ai-banner-title{font-size:.75rem;font-weight:700;color:#CC88FF;letter-spacing:1px;margin-bottom:.25rem;}
+.ai-banner-desc{font-size:.74rem;color:#9060AA;line-height:1.6;}
+
+/* ═══════════════ SOCIAL ═══════════════ */
+.social-row{display:flex;gap:.6rem;margin-bottom:.9rem;}
+.soc-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:.45rem;
+  padding:.65rem;border-radius:9px;font-family:'Tajawal',sans-serif;
+  font-size:.82rem;font-weight:700;cursor:pointer;
+  text-decoration:none;transition:all .18s;border:1.5px solid;
+}
+.soc-x{background:rgba(0,0,0,0.38);border-color:rgba(255,255,255,0.14);color:#bbb;}
+.soc-x:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.35);color:#fff;transform:scale(1.02);}
+.soc-tg{background:rgba(0,65,110,0.2);border-color:rgba(0,130,200,0.28);color:#5ab4e4;}
+.soc-tg:hover{background:rgba(0,130,200,0.12);border-color:rgba(0,130,200,0.55);transform:scale(1.02);}
+
+/* ═══════════════ HISTORY ═══════════════ */
+#histSection{display:none;margin-bottom:1.2rem;}
+.sec-label{font-size:.68rem;color:var(--dim);letter-spacing:2px;margin-bottom:.55rem;font-family:'Share Tech Mono',monospace;}
+#histList{display:grid;gap:.32rem;}
+.hist-item{
+  display:flex;align-items:center;gap:.55rem;
+  padding:.52rem .82rem;background:var(--panel);
+  border:1px solid var(--border);border-radius:8px;
+  cursor:pointer;transition:all .18s;font-size:.78rem;
+}
+.hist-item:hover{border-color:rgba(255,34,68,0.32);background:rgba(255,34,68,0.04);}
+.hist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.hist-dot.safe{background:var(--green);}
+.hist-dot.warning{background:var(--yellow);}
+.hist-dot.danger{background:var(--neon);}
+.hist-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);direction:ltr;text-align:left;}
+.hist-score{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);}
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer{
+  text-align:center;padding:1.4rem 0 .8rem;
+  font-size:.7rem;color:#282028;
+  border-top:1px solid rgba(100,0,15,0.1);
+  margin-top:1rem;
+}
+footer a{color:#4a2a2a;text-decoration:none;}
+footer a:hover{color:var(--dim);}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="bg-scanlines"></div>
+<div class="bg-grid"></div>
+<div id="particles"></div>
+
+<!-- ═══ LANGUAGE BAR ═══ -->
+<div id="langBar">
+  <button class="lbtn on" onclick="setLang('ar')">🇸🇦 العربية</button>
+  <div class="lsep"></div>
+  <button class="lbtn" onclick="setLang('en')">🇺🇸 English</button>
+  <div class="lsep"></div>
+  <button class="lbtn" onclick="setLang('fr')">🇫🇷 Français</button>
+  <div class="lsep"></div>
+  <button class="lbtn" onclick="setLang('es')">🇪🇸 Español</button>
+  <div class="lsep"></div>
+  <button class="lbtn" onclick="setLang('tr')">🇹🇷 Türkçe</button>
+  <div class="lsep"></div>
+  <button class="lbtn" onclick="setLang('de')">🇩🇪 Deutsch</button>
+</div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-ring"><span class="logo-skull">💀</span></div>
+    <h1 class="app-title">LinkReaper</h1>
+    <span class="app-version">v3.1</span>
+    <p id="tagline"></p>
+  </div>
+
+  <!-- MONSTER -->
+  <div class="monster-box">
+    <div class="mon-avatar" id="monAvatar">💀</div>
+    <div style="flex:1">
+      <div class="mon-name">// REAPER.EXE v3.1</div>
+      <div id="monsterText"><span class="tcursor"></span></div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-card">
+    <span id="inputLabel"></span>
+    <div class="input-row">
+      <input type="url" id="urlInput" autocomplete="off" spellcheck="false"/>
+      <button id="scanBtn" onclick="startScan()">🔍 <span id="scanBtnTxt"></span></button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingCard">
+    <div class="lsteps" id="lsteps">
+      <div class="lstep" id="ls0"><div class="lstep-dot"></div><span id="lt0"></span></div>
+      <div class="lstep" id="ls1"><div class="lstep-dot"></div><span id="lt1"></span></div>
+      <div class="lstep" id="ls2"><div class="lstep-dot"></div><span id="lt2"></span></div>
+      <div class="lstep" id="ls3"><div class="lstep-dot"></div><span id="lt3"></span></div>
+      <div class="lstep" id="ls4"><div class="lstep-dot"></div><span id="lt4"></span></div>
+    </div>
+    <div class="prog-track"><div id="progressFill"></div></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultCard">
+    <div class="res-header">
+      <div class="res-badge" id="resBadge"></div>
+      <div style="flex:1;min-width:0;">
+        <div id="resultVerdict"></div>
+        <div id="resultDomain"></div>
+      </div>
+    </div>
+    <div class="score-row">
+      <span id="scoreNum">0</span>
+      <div class="score-track"><div id="scoreBar"></div></div>
+      <span class="score-slash">/100</span>
+    </div>
+    <div id="aiVerdict"></div>
+    <div id="checksTitle"></div>
+    <div id="checksGrid"></div>
+    <div class="share-row">
+      <button class="share-btn" id="shareBtn" onclick="shareResult()">🔗 <span id="shareTxt">مشاركة النتيجة</span></button>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div id="tipsCard"></div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer" id="disclaimerEl"></div>
+
+  <!-- AI BANNER -->
+  <div class="ai-banner">
+    <div class="ai-banner-icon">🤖</div>
+    <div>
+      <div class="ai-banner-title" id="bannerTitle"></div>
+      <div class="ai-banner-desc" id="bannerDesc"></div>
+    </div>
+  </div>
+
+  <!-- SOCIAL -->
+  <div class="social-row">
+    <a class="soc-btn soc-x" href="https://x.com/LinkReaperApp" target="_blank" rel="noopener noreferrer">
+      <span>𝕏</span><span id="xTxt"></span>
+    </a>
+    <a class="soc-btn soc-tg" href="https://t.me/LinkReaperApp" target="_blank" rel="noopener noreferrer">
+      <span>✈️</span><span id="tgTxt"></span>
+    </a>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="histSection">
+    <div class="sec-label" id="histLabel"></div>
+    <div id="histList"></div>
+  </div>
+
+  <footer id="footerEl"></footer>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   TRANSLATIONS  (ar · en · fr · es · tr · de)
+══════════════════════════════════════════════════ */
+const T = {
+ar:{
+  dir:'rtl',
+  tagline:'كاشف الروابط الرقمي • يشمّ الخطر من كيلومترات',
+  inputLabel:'// أدخل الرابط المشبوه',
+  scanBtn:'فحص',
+  idle:'أنا هنا وجاهز... الصق أي رابط وسأكشف حقيقته.',
+  empty:'...الصق رابطاً أولاً يا صاحبي 😑',
+  scanning:'أفحص الرابط... انتظر...',
+  steps:['// تحليل بنية الرابط...','// فحص بروتوكول الأمان...','// البحث عن أنماط التصيد...','// تقييم مستوى الخطر...','// صياغة الحكم النهائي...'],
+  stepMsgs:['أحلل بنية الرابط...','أفحص بروتوكول الأمان...','أبحث عن التصيد...','أقيّم مستوى الخطر...','أصيغ الحكم النهائي...'],
+  verdict:{safe:'الرابط يبدو آمناً!',warning:'مشبوه — توقف!',danger:'خطر! ابتعد الآن!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// نتائج الفحص التفصيلي',
+  histLabel:'// آخر الروابط المفحوصة',
+  bannerTitle:'// التحديث القادم',
+  bannerDesc:'نعمل على دمج الذكاء الاصطناعي لنتائج أكثر دقة. تابعنا على X وTelegram للبقاء على اطلاع!',
+  tips:'⚠️ نصائح الحماية: لا تدخل أي بيانات شخصية في هذا الرابط. إذا وصلك من مجهول فاحذفه فوراً. استخدم برنامج حماية محدّث.',
+  disclaimer:'⚙️ هذا الفحص تحليل أولي يعتمد على خصائص الرابط فقط. لا يضمن الأمان التام. استخدم حكمك دائماً.',
+  share:'مشاركة النتيجة',
+  xTxt:'تابعنا على X',
+  tgTxt:'قناة Telegram',
+  footer:'LinkReaper v3.1 — فحص أولي للروابط',
+  footerSub:'لا تثق بأي رابط مجهول',
+  monReact:{safe:'الرابط يبدو سليماً 😌',warning:'في إشارات مشبوهة 😒',danger:'خطر واضح! لا تقترب! 😱'},
+  shareText:(d,s,l)=>`🔍 فحصت "${d}" بـ LinkReaper\n${l==='safe'?'✅ آمن':'l'==='warning'?'⚠️ مشبوه':'💀 خطير'} — ${s}/100\n\nجرب الموقع: https://linkreaper.app`,
+  ck:{
+    httpsOk:'اتصال مشفر HTTPS — ✅',httpsBad:'HTTP غير مشفر — ❌ خطر!',
+    ipBad:'يستخدم IP مباشر بدلاً من نطاق — ❌',ipOk:'يستخدم اسم نطاق طبيعي — ✅',
+    trustedOk:'نطاق موثوق ومعروف عالمياً — ⭐',
+    tldBad:'امتداد النطاق مشبوه — ❌',tldOk:'امتداد النطاق طبيعي — ✅',
+    phishMany:(n,w)=>`${n} كلمات تصيّد: "${w}" — ❌`,
+    phishOne:(w)=>`كلمة مشبوهة: "${w}" — ⚠️`,
+    phishOk:'لا كلمات تصيّد في الرابط — ✅',
+    longBad:(n)=>`رابط طويل جداً (${n} حرف) — ❌`,
+    longWarn:(n)=>`طول مقبول (${n} حرف) — ⚠️`,
+    longOk:(n)=>`طول الرابط طبيعي (${n} حرف) — ✅`,
+    subBad:(n)=>`${n} نطاقات فرعية — تضليل! ❌`,
+    subWarn:'نطاقات فرعية متعددة — ⚠️',
+    subOk:'بنية النطاق طبيعية — ✅',
+    specialBad:'رموز غريبة في اسم النطاق — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`هذا الرابط "${d}" يبدو نظيفاً. لم أشمّ فيه دماءً رقمية ولا نوايا شريرة. درجة أمانه ${s}/100 — يمكنك المتابعة بحذر معقول.`,
+      (d,s)=>`"${d}" اجتاز الاختبار. نظيف، مشفر، لا أشمّ فيه شيئاً مريباً. ${s}/100 — الوحش مرتاح.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" يعطيني إشارات مختلطة. ليس خطيراً لكن ليس نظيفاً تماماً. ${s}/100 — تحقق من مصدره قبل أي خطوة.`,
+      (d,s)=>`أحسّ بشيء غريب في "${d}". مش خطر واضح، لكن مش مريح. ${s}/100 — لا تدخل بيانات حساسة.`
+    ],
+    danger:[
+      (d,s)=>`🚨 "${d}" رابط سام وخطير! كل علاماتي تصرخ تحذيراً. ${s}/100 فقط — يشبه بالضبط روابط التصيّد. لا تلمسه!`,
+      (d,s)=>`الوحش يصرخ: "${d}" خطر داهم! ${s}/100 نقطة فقط. كل مؤشراتي تشير إلى احتيال. ابتعد فوراً!`
+    ]
+  }
+},
+en:{
+  dir:'ltr',
+  tagline:'Digital Link Scanner • Sniffs Danger from Miles Away',
+  inputLabel:'// Enter suspicious URL',
+  scanBtn:'SCAN',
+  idle:"I'm ready... paste any URL and I'll reveal its true nature.",
+  empty:"...paste a URL first, coward 😑",
+  scanning:'Analyzing the link... hold on...',
+  steps:['// Parsing URL structure...','// Checking security protocol...','// Scanning for phishing patterns...','// Evaluating threat level...','// Formulating final verdict...'],
+  stepMsgs:['Parsing URL structure...','Checking security protocol...','Scanning for phishing...','Evaluating threat level...','Formulating verdict...'],
+  verdict:{safe:'This Link is Safe!',warning:'Suspicious — Stop!',danger:'DANGER! Back Away!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// Detailed Scan Results',
+  histLabel:'// Recently Scanned URLs',
+  bannerTitle:'// Coming Soon',
+  bannerDesc:"We're integrating AI for deeper, smarter link analysis. Follow us on X and Telegram to stay updated!",
+  tips:'⚠️ Safety Tips: Never enter personal data on suspicious sites. If received from an unknown sender, delete immediately. Keep antivirus up to date.',
+  disclaimer:'⚙️ This is a preliminary analysis based on URL characteristics only. It does not guarantee absolute safety. Always use your own judgment.',
+  share:'Share Result',
+  xTxt:'Follow on X',
+  tgTxt:'Telegram Channel',
+  footer:'LinkReaper v3.1 — Preliminary URL Analysis',
+  footerSub:'Never trust an unknown link',
+  monReact:{safe:'Link looks clean 😌',warning:'Some suspicious signals 😒',danger:'Clear danger! Stay away! 😱'},
+  shareText:(d,s,l)=>`🔍 Scanned "${d}" with LinkReaper\n${l==='safe'?'✅ Safe':l==='warning'?'⚠️ Suspicious':'💀 Dangerous'} — ${s}/100\n\nTry it: https://linkreaper.app`,
+  ck:{
+    httpsOk:'Encrypted HTTPS connection — ✅',httpsBad:'Unencrypted HTTP — ❌ Dangerous!',
+    ipBad:'Uses direct IP instead of domain — ❌',ipOk:'Uses normal domain name — ✅',
+    trustedOk:'Globally trusted & recognized domain — ⭐',
+    tldBad:'Very suspicious domain extension — ❌',tldOk:'Domain extension looks normal — ✅',
+    phishMany:(n,w)=>`${n} phishing keywords: "${w}" — ❌`,
+    phishOne:(w)=>`Suspicious word found: "${w}" — ⚠️`,
+    phishOk:'No phishing keywords in URL — ✅',
+    longBad:(n)=>`URL too long (${n} chars) — ❌`,
+    longWarn:(n)=>`URL length acceptable (${n} chars) — ⚠️`,
+    longOk:(n)=>`Normal URL length (${n} chars) — ✅`,
+    subBad:(n)=>`${n} subdomains — deceptive tactic! ❌`,
+    subWarn:'Multiple subdomains detected — ⚠️',
+    subOk:'Domain structure is clean — ✅',
+    specialBad:'Strange characters in domain name — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`"${d}" looks clean to me. No digital blood, no evil intentions detected. Safety score: ${s}/100 — proceed with reasonable caution.`,
+      (d,s)=>`"${d}" passed the test. Clean, encrypted, nothing suspicious here. ${s}/100 — The Reaper is at ease.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" gives me mixed signals. Not clearly dangerous, but not clean either. ${s}/100 — verify the source before proceeding.`,
+      (d,s)=>`Something feels off about "${d}". Not an obvious threat but not comfortable. ${s}/100 — don't enter sensitive data.`
+    ],
+    danger:[
+      (d,s)=>`🚨 "${d}" is toxic and dangerous! All my signals are screaming. Only ${s}/100 — looks exactly like a phishing link. Don't touch it!`,
+      (d,s)=>`THE REAPER SCREAMS: "${d}" is imminent danger! Just ${s}/100. Every indicator points to fraud. STAY AWAY NOW!`
+    ]
+  }
+},
+fr:{
+  dir:'ltr',
+  tagline:'Détecteur de Liens Numérique • Sent le Danger à des Kilomètres',
+  inputLabel:"// Entrez l'URL suspecte",
+  scanBtn:'SCANNER',
+  idle:"Je suis prêt... collez n'importe quel lien et je révélerai sa vraie nature.",
+  empty:"...collez d'abord une URL 😑",
+  scanning:'Analyse du lien en cours...',
+  steps:["// Analyse de la structure URL...","// Vérification du protocole...",'// Recherche de phishing...',"// Évaluation de la menace...",'// Formulation du verdict...'],
+  stepMsgs:["Analyse de la structure...","Vérification du protocole...",'Recherche de phishing...',"Évaluation de la menace...",'Formulation du verdict...'],
+  verdict:{safe:'Ce Lien est Sûr!',warning:'Suspect — Arrêtez!',danger:'DANGER! Reculez!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// Résultats Détaillés du Scan',
+  histLabel:'// Liens Récemment Scannés',
+  bannerTitle:'// Prochainement',
+  bannerDesc:"Nous intégrons l'IA pour une analyse plus approfondie. Suivez-nous sur X et Telegram!",
+  tips:"⚠️ Conseils: Ne saisissez jamais de données personnelles sur des sites suspects. Si reçu d'un inconnu, supprimez immédiatement.",
+  disclaimer:"⚙️ Il s'agit d'une analyse préliminaire basée sur les caractéristiques de l'URL uniquement. Elle ne garantit pas une sécurité absolue.",
+  share:'Partager le Résultat',
+  xTxt:'Suivre sur X',
+  tgTxt:'Canal Telegram',
+  footer:'LinkReaper v3.1 — Analyse Préliminaire',
+  footerSub:'Ne faites confiance à aucun lien inconnu',
+  monReact:{safe:'Lien propre 😌',warning:'Signaux suspects 😒',danger:'Danger évident! Fuyez! 😱'},
+  shareText:(d,s,l)=>`🔍 Scanné "${d}" avec LinkReaper\n${l==='safe'?'✅ Sûr':l==='warning'?'⚠️ Suspect':'💀 Dangereux'} — ${s}/100\n\nEssayez: https://linkreaper.app`,
+  ck:{
+    httpsOk:'Connexion HTTPS chiffrée — ✅',httpsBad:'HTTP non chiffré — ❌ Dangereux!',
+    ipBad:'Utilise une IP directe — ❌',ipOk:'Utilise un nom de domaine normal — ✅',
+    trustedOk:'Domaine de confiance reconnu mondialement — ⭐',
+    tldBad:'Extension de domaine très suspecte — ❌',tldOk:"Extension de domaine normale — ✅",
+    phishMany:(n,w)=>`${n} mots de phishing: "${w}" — ❌`,
+    phishOne:(w)=>`Mot suspect: "${w}" — ⚠️`,
+    phishOk:'Aucun mot de phishing trouvé — ✅',
+    longBad:(n)=>`URL trop longue (${n} car.) — ❌`,
+    longWarn:(n)=>`Longueur acceptable (${n} car.) — ⚠️`,
+    longOk:(n)=>`Longueur normale (${n} car.) — ✅`,
+    subBad:(n)=>`${n} sous-domaines — trompeur! ❌`,
+    subWarn:'Plusieurs sous-domaines — ⚠️',
+    subOk:'Structure de domaine propre — ✅',
+    specialBad:'Caractères étranges dans le domaine — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`"${d}" semble propre. Pas de sang numérique détecté. Score: ${s}/100 — vous pouvez continuer avec prudence.`,
+      (d,s)=>`"${d}" a passé le test. Propre et chiffré. ${s}/100 — Le Faucheur est satisfait.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" m'envoie des signaux mitigés. Pas clairement dangereux, mais pas propre non plus. ${s}/100 — vérifiez la source.`,
+      (d,s)=>`Quelque chose d'étrange avec "${d}". ${s}/100 — ne saisissez pas de données sensibles.`
+    ],
+    danger:[
+      (d,s)=>`🚨 "${d}" est toxique et dangereux! Seulement ${s}/100. Ressemble à un lien de phishing. Ne touchez pas!`,
+      (d,s)=>`LE FAUCHEUR CRIE: "${d}" est un danger imminent! ${s}/100 seulement. Tout indique une fraude. FUYEZ!`
+    ]
+  }
+},
+es:{
+  dir:'ltr',
+  tagline:'Detector de Links Digital • Huele el Peligro a Kilómetros',
+  inputLabel:'// Ingrese la URL sospechosa',
+  scanBtn:'ESCANEAR',
+  idle:"Estoy listo... pega cualquier enlace y revelaré su verdadera naturaleza.",
+  empty:"...pega primero una URL 😑",
+  scanning:'Analizando el enlace...',
+  steps:['// Analizando estructura URL...','// Verificando protocolo de seguridad...','// Buscando patrones de phishing...','// Evaluando nivel de amenaza...','// Formulando veredicto final...'],
+  stepMsgs:['Analizando estructura...','Verificando protocolo...','Buscando phishing...','Evaluando amenaza...','Formulando veredicto...'],
+  verdict:{safe:'¡Este Enlace es Seguro!',warning:'¡Sospechoso — Alto!',danger:'¡PELIGRO! ¡Aléjate!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// Resultados Detallados',
+  histLabel:'// URLs Escaneadas Recientemente',
+  bannerTitle:'// Próximamente',
+  bannerDesc:'Estamos integrando IA para un análisis más profundo. ¡Síguenos en X y Telegram!',
+  tips:'⚠️ Consejos: Nunca ingreses datos personales en sitios sospechosos. Si lo recibiste de un desconocido, elimínalo.',
+  disclaimer:'⚙️ Este es un análisis preliminar basado solo en las características de la URL. No garantiza seguridad absoluta.',
+  share:'Compartir Resultado',
+  xTxt:'Seguir en X',
+  tgTxt:'Canal de Telegram',
+  footer:'LinkReaper v3.1 — Análisis Preliminar de URLs',
+  footerSub:'Nunca confíes en un enlace desconocido',
+  monReact:{safe:'Enlace limpio 😌',warning:'Señales sospechosas 😒',danger:'¡Peligro claro! ¡Aléjate! 😱'},
+  shareText:(d,s,l)=>`🔍 Escaneé "${d}" con LinkReaper\n${l==='safe'?'✅ Seguro':l==='warning'?'⚠️ Sospechoso':'💀 Peligroso'} — ${s}/100\n\nPruébalo: https://linkreaper.app`,
+  ck:{
+    httpsOk:'Conexión HTTPS cifrada — ✅',httpsBad:'HTTP no cifrado — ❌ ¡Peligroso!',
+    ipBad:'Usa IP directa en lugar de dominio — ❌',ipOk:'Usa nombre de dominio normal — ✅',
+    trustedOk:'Dominio confiable reconocido mundialmente — ⭐',
+    tldBad:'Extensión de dominio muy sospechosa — ❌',tldOk:'Extensión de dominio normal — ✅',
+    phishMany:(n,w)=>`${n} palabras de phishing: "${w}" — ❌`,
+    phishOne:(w)=>`Palabra sospechosa: "${w}" — ⚠️`,
+    phishOk:'Sin palabras de phishing en la URL — ✅',
+    longBad:(n)=>`URL demasiado larga (${n} chars) — ❌`,
+    longWarn:(n)=>`Longitud aceptable (${n} chars) — ⚠️`,
+    longOk:(n)=>`Longitud normal (${n} chars) — ✅`,
+    subBad:(n)=>`${n} subdominios — táctica engañosa! ❌`,
+    subWarn:'Múltiples subdominios — ⚠️',
+    subOk:'Estructura de dominio limpia — ✅',
+    specialBad:'Caracteres extraños en el dominio — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`"${d}" parece limpio. No detecté sangre digital. Puntuación: ${s}/100 — puedes continuar con cautela.`,
+      (d,s)=>`"${d}" pasó la prueba. Limpio y cifrado. ${s}/100 — El Segador está satisfecho.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" me envía señales mixtas. No claramente peligroso, pero tampoco limpio. ${s}/100 — verifica el origen.`,
+      (d,s)=>`Algo raro en "${d}". ${s}/100 — no ingreses datos sensibles.`
+    ],
+    danger:[
+      (d,s)=>`🚨 ¡"${d}" es tóxico y peligroso! Solo ${s}/100. Parece exactamente un enlace de phishing. ¡No lo toques!`,
+      (d,s)=>`EL SEGADOR GRITA: ¡"${d}" es peligro inminente! Solo ${s}/100. Todo indica fraude. ¡ALÉJATE YA!`
+    ]
+  }
+},
+tr:{
+  dir:'ltr',
+  tagline:'Dijital Bağlantı Tarayıcı • Tehlikeyi Kilometrelerce Önceden Hisseder',
+  inputLabel:"// Şüpheli URL'yi girin",
+  scanBtn:'TARA',
+  idle:"Hazırım... herhangi bir URL yapıştırın, gerçeğini ortaya çıkarayım.",
+  empty:"...önce bir URL yapıştır 😑",
+  scanning:'Bağlantı analiz ediliyor...',
+  steps:['// URL yapısı ayrıştırılıyor...','// Güvenlik protokolü kontrol ediliyor...','// Kimlik avı taranıyor...','// Tehdit seviyesi değerlendiriliyor...','// Son karar formüle ediliyor...'],
+  stepMsgs:['URL yapısı...','Güvenlik protokolü...','Kimlik avı tarama...','Tehdit değerlendirme...','Son karar...'],
+  verdict:{safe:'Bu Bağlantı Güvenli!',warning:'Şüpheli — Dur!',danger:'TEHLİKE! Uzaklaş!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// Ayrıntılı Tarama Sonuçları',
+  histLabel:"// Son Taranan URL'ler",
+  bannerTitle:'// Yakında',
+  bannerDesc:"Daha derin analiz için yapay zeka entegre ediyoruz. X ve Telegram'da bizi takip edin!",
+  tips:'⚠️ Güvenlik İpuçları: Şüpheli sitelere kişisel veri girmeyin. Bilinmeyen birinden geldiyse hemen silin.',
+  disclaimer:'⚙️ Bu, yalnızca URL özelliklerine dayalı ön bir analizdir. Mutlak güvenliği garanti etmez.',
+  share:'Sonucu Paylaş',
+  xTxt:"X'te Takip Et",
+  tgTxt:'Telegram Kanalı',
+  footer:'LinkReaper v3.1 — Ön URL Analizi',
+  footerSub:'Hiçbir bilinmeyen bağlantıya güvenme',
+  monReact:{safe:'Bağlantı temiz 😌',warning:'Şüpheli sinyaller 😒',danger:'Açık tehlike! Uzaklaş! 😱'},
+  shareText:(d,s,l)=>`🔍 "${d}" LinkReaper ile tarandı\n${l==='safe'?'✅ Güvenli':l==='warning'?'⚠️ Şüpheli':'💀 Tehlikeli'} — ${s}/100\n\nDeneyin: https://linkreaper.app`,
+  ck:{
+    httpsOk:'Şifreli HTTPS bağlantısı — ✅',httpsBad:'Şifresiz HTTP — ❌ Tehlikeli!',
+    ipBad:'Alan adı yerine doğrudan IP — ❌',ipOk:'Normal alan adı kullanıyor — ✅',
+    trustedOk:'Dünya genelinde tanınan güvenilir alan — ⭐',
+    tldBad:'Çok şüpheli alan adı uzantısı — ❌',tldOk:'Alan adı uzantısı normal — ✅',
+    phishMany:(n,w)=>`${n} kimlik avı kelimesi: "${w}" — ❌`,
+    phishOne:(w)=>`Şüpheli kelime: "${w}" — ⚠️`,
+    phishOk:"URL'de kimlik avı kelimesi yok — ✅",
+    longBad:(n)=>`Çok uzun URL (${n} karakter) — ❌`,
+    longWarn:(n)=>`Kabul edilebilir uzunluk (${n}) — ⚠️`,
+    longOk:(n)=>`Normal uzunluk (${n} karakter) — ✅`,
+    subBad:(n)=>`${n} alt alan — yanıltıcı taktik! ❌`,
+    subWarn:'Birden fazla alt alan — ⚠️',
+    subOk:'Alan yapısı temiz — ✅',
+    specialBad:'Alan adında garip karakterler — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`"${d}" temiz görünüyor. Dijital kan tespit edilmedi. Puan: ${s}/100 — dikkatli ilerleyebilirsin.`,
+      (d,s)=>`"${d}" testi geçti. Temiz ve şifreli. ${s}/100 — Biçici rahat.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" karışık sinyaller veriyor. Açıkça tehlikeli değil ama temiz de değil. ${s}/100 — kaynağı doğrula.`,
+      (d,s)=>`"${d}" hakkında garip bir his var. ${s}/100 — hassas veri girme.`
+    ],
+    danger:[
+      (d,s)=>`🚨 "${d}" zehirli ve tehlikeli! Sadece ${s}/100. Tam bir kimlik avı bağlantısına benziyor. Dokunma!`,
+      (d,s)=>`BİÇİCİ BAĞIRIYOR: "${d}" yakın tehlike! Sadece ${s}/100. Her şey dolandırıcılığa işaret ediyor. KAÇIN!`
+    ]
+  }
+},
+de:{
+  dir:'ltr',
+  tagline:'Digitaler Link-Scanner • Riecht Gefahr aus Kilometern Entfernung',
+  inputLabel:'// Verdächtige URL eingeben',
+  scanBtn:'SCANNEN',
+  idle:'Ich bin bereit... füge eine URL ein und ich enthülle ihre wahre Natur.',
+  empty:'...füge zuerst eine URL ein 😑',
+  scanning:'Analysiere den Link...',
+  steps:['// URL-Struktur wird analysiert...','// Sicherheitsprotokoll wird geprüft...','// Phishing-Muster werden gesucht...','// Bedrohungsstufe wird bewertet...','// Endgültiges Urteil wird formuliert...'],
+  stepMsgs:['URL-Struktur...','Sicherheitsprotokoll...','Phishing-Scan...','Bedrohungsbewertung...','Endurteil...'],
+  verdict:{safe:'Dieser Link ist Sicher!',warning:'Verdächtig — Stopp!',danger:'GEFAHR! Zurückweichen!'},
+  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
+  checksTitle:'// Detaillierte Scan-Ergebnisse',
+  histLabel:'// Zuletzt Gescannte URLs',
+  bannerTitle:'// Demnächst',
+  bannerDesc:'Wir integrieren KI für tiefere Linkanalyse. Folge uns auf X und Telegram!',
+  tips:'⚠️ Sicherheitstipps: Gib keine persönlichen Daten auf verdächtigen Seiten ein. Wenn von Unbekanntem erhalten, sofort löschen.',
+  disclaimer:'⚙️ Dies ist eine vorläufige Analyse basierend auf URL-Eigenschaften. Sie garantiert keine absolute Sicherheit.',
+  share:'Ergebnis Teilen',
+  xTxt:'Auf X folgen',
+  tgTxt:'Telegram-Kanal',
+  footer:'LinkReaper v3.1 — Vorläufige URL-Analyse',
+  footerSub:'Vertraue keinem unbekannten Link',
+  monReact:{safe:'Link ist sauber 😌',warning:'Verdächtige Signale 😒',danger:'Klare Gefahr! Flieh! 😱'},
+  shareText:(d,s,l)=>`🔍 "${d}" mit LinkReaper gescannt\n${l==='safe'?'✅ Sicher':l==='warning'?'⚠️ Verdächtig':'💀 Gefährlich'} — ${s}/100\n\nAusprobieren: https://linkreaper.app`,
+  ck:{
+    httpsOk:'Verschlüsselte HTTPS-Verbindung — ✅',httpsBad:'Unverschlüsseltes HTTP — ❌ Gefährlich!',
+    ipBad:'Verwendet direkte IP statt Domain — ❌',ipOk:'Verwendet normalen Domainnamen — ✅',
+    trustedOk:'Weltweit anerkannte vertrauenswürdige Domain — ⭐',
+    tldBad:'Sehr verdächtige Domain-Erweiterung — ❌',tldOk:'Domain-Erweiterung normal — ✅',
+    phishMany:(n,w)=>`${n} Phishing-Wörter: "${w}" — ❌`,
+    phishOne:(w)=>`Verdächtiges Wort: "${w}" — ⚠️`,
+    phishOk:'Keine Phishing-Wörter in URL — ✅',
+    longBad:(n)=>`URL zu lang (${n} Zeichen) — ❌`,
+    longWarn:(n)=>`Akzeptable Länge (${n} Zeichen) — ⚠️`,
+    longOk:(n)=>`Normale Länge (${n} Zeichen) — ✅`,
+    subBad:(n)=>`${n} Subdomains — Täuschung! ❌`,
+    subWarn:'Mehrere Subdomains — ⚠️',
+    subOk:'Domainstruktur sauber — ✅',
+    specialBad:'Seltsame Zeichen im Domainnamen — ❌',
+  },
+  ai:{
+    safe:[
+      (d,s)=>`"${d}" sieht sauber aus. Kein digitales Blut erkannt. Sicherheitswert: ${s}/100 — mit Vorsicht fortfahren.`,
+      (d,s)=>`"${d}" hat den Test bestanden. Sauber und verschlüsselt. ${s}/100 — Der Reaper ist zufrieden.`
+    ],
+    warning:[
+      (d,s)=>`"${d}" sendet gemischte Signale. Nicht klar gefährlich, aber auch nicht sauber. ${s}/100 — Quelle überprüfen.`,
+      (d,s)=>`Etwas Seltsames an "${d}". ${s}/100 — Keine sensiblen Daten eingeben.`
+    ],
+    danger:[
+      (d,s)=>`🚨 "${d}" ist giftig und gefährlich! Nur ${s}/100. Sieht genau wie ein Phishing-Link aus. Nicht anfassen!`,
+      (d,s)=>`DER REAPER SCHREIT: "${d}" ist unmittelbare Gefahr! Nur ${s}/100. Alles deutet auf Betrug. FLIEH JETZT!`
+    ]
+  }
+}
+};
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let lang = 'ar';
+let history = [];
+let lastResult = null;
+let isScanning = false;
+
+/* ══════════════════════════════════════════════════
+   PARTICLES
+══════════════════════════════════════════════════ */
+(function initParticles(){
+  const c = document.getElementById('particles');
+  for(let i=0;i<22;i++){
+    const p = document.createElement('div');
+    p.className='ptcl';
+    p.style.cssText=`right:${Math.random()*100}%;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+    c.appendChild(p);
+  }
+})();
+
+/* ══════════════════════════════════════════════════
+   TYPE EFFECT
+══════════════════════════════════════════════════ */
+let typeTimer = null;
+function typeText(el, txt, speed=26){
+  return new Promise(res=>{
+    if(typeTimer) clearInterval(typeTimer);
+    el.innerHTML='<span class="tcursor"></span>';
+    let i=0;
+    typeTimer=setInterval(()=>{
+      if(i<txt.length){
+        el.innerHTML=txt.slice(0,++i)+'<span class="tcursor"></span>';
+      } else {
+        clearInterval(typeTimer);
+        typeTimer=null;
+        el.innerHTML=txt+'<span class="tcursor"></span>';
+        res();
+      }
+    },speed);
+  });
+}
+
+function countUp(el,target,ms=850){
+  const t0=performance.now();
+  (function step(now){
+    const p=Math.min((now-t0)/ms,1);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(target*e);
+    if(p<1) requestAnimationFrame(step);
+  })(performance.now());
+}
+
+/* ══════════════════════════════════════════════════
+   SET LANGUAGE
+══════════════════════════════════════════════════ */
+function setLang(l){
+  lang=l;
+  const L=T[l];
+  const html=document.documentElement;
+  html.setAttribute('lang',l);
+  html.setAttribute('dir',L.dir);
+
+  // lang buttons
+  document.querySelectorAll('.lbtn').forEach(b=>{
+    b.classList.toggle('on', b.getAttribute('onclick').includes(`'${l}'`));
+  });
+
+  // Static UI strings
+  document.getElementById('tagline').textContent=L.tagline;
+  document.getElementById('inputLabel').textContent=L.inputLabel;
+  document.getElementById('scanBtnTxt').textContent=L.scanBtn;
+  document.getElementById('checksTitle').textContent=L.checksTitle;
+  document.getElementById('histLabel').textContent=L.histLabel;
+  document.getElementById('bannerTitle').textContent=L.bannerTitle;
+  document.getElementById('bannerDesc').textContent=L.bannerDesc;
+  document.getElementById('xTxt').textContent=L.xTxt;
+  document.getElementById('tgTxt').textContent=L.tgTxt;
+  document.getElementById('shareTxt').textContent=L.share;
+  document.getElementById('disclaimerEl').textContent=L.disclaimer;
+  document.getElementById('footerEl').innerHTML=`${L.footer} &nbsp;•&nbsp; <span style="color:#5a2a2a">${L.footerSub}</span>`;
+
+  // Loading step labels
+  for(let i=0;i<5;i++) document.getElementById('lt'+i).textContent=L.steps[i];
+
+  // Monster idle
+  typeText(document.getElementById('monsterText'),L.idle);
+  document.getElementById('monAvatar').textContent='💀';
+
+  // Tips card - update if visible
+  const tc=document.getElementById('tipsCard');
+  if(tc.style.display!=='none'){
+    tc.innerHTML=`<strong>${L.tips.split(':')[0]}:</strong>${L.tips.split(':').slice(1).join(':')}`;
+  }
+
+  // Re-render existing result if any
+  if(lastResult){
+    const {score,level,checks,domain,rawUrl}=lastResult;
+    renderResult(score,level,checks,domain,rawUrl,false);
+  }
+
+  renderHistory();
+}
+
+/* ══════════════════════════════════════════════════
+   URL ANALYSIS ENGINE
+══════════════════════════════════════════════════ */
+function analyzeURL(rawUrl){
+  const L=T[lang];const C=L.ck;
+  let score=100;
+  const checks=[];
+  let fullUrl=rawUrl;
+  let parsed;
+
+  try{
+    if(!/^https?:\/\//i.test(rawUrl)) fullUrl='http://'+rawUrl;
+    parsed=new URL(fullUrl);
+  }catch(e){
+    return{score:0,level:'danger',checks:[{cls:'chk-bad',txt:C.ipBad}],domain:'???'};
+  }
+
+  const domain=parsed.hostname.toLowerCase();
+  const protocol=parsed.protocol;
+
+  // 1. HTTPS
+  if(protocol==='https:'){checks.push({cls:'chk-ok',txt:C.httpsOk});}
+  else{checks.push({cls:'chk-bad',txt:C.httpsBad});score-=30;}
+
+  // 2. IP address
+  if(/^(\d{1,3}\.){3}\d{1,3}$/.test(domain)){checks.push({cls:'chk-bad',txt:C.ipBad});score-=40;}
+  else{checks.push({cls:'chk-ok',txt:C.ipOk});}
+
+  // 3. Trusted domains
+  const trusted=['google.com','youtube.com','twitter.com','x.com','facebook.com','instagram.com','github.com','microsoft.com','apple.com','amazon.com','wikipedia.org','whatsapp.com','linkedin.com','tiktok.com','snapchat.com','netflix.com','paypal.com','adobe.com','dropbox.com','zoom.us','spotify.com','reddit.com','twitch.tv','discord.com','telegram.org'];
+  const isTrusted=trusted.some(t=>domain===t||domain.endsWith('.'+t));
+  if(isTrusted){checks.push({cls:'chk-ok',txt:C.trustedOk});score=Math.min(score+20,100);}
+
+  // 4. Bad TLDs
+  const badTlds=['.xyz','.tk','.ml','.ga','.cf','.gq','.top','.click','.loan','.win','.download','.stream','.party','.bid','.review','.accountant','.science','.faith','.date'];
+  if(badTlds.some(t=>domain.endsWith(t))){checks.push({cls:'chk-bad',txt:C.tldBad});score-=25;}
+  else if(!isTrusted){checks.push({cls:'chk-ok',txt:C.tldOk});}
+
+  // 5. Phishing keywords
+  const phish=['login','verify','secure','account','update','confirm','paypal','apple-id','microsoft','amazon','bank','password','signin','wallet','crypto','free','prize','winner','urgent','suspended','alert','activation','webscr','cmd=','ebayisapi','recover','password-reset'];
+  const found=phish.filter(w=>rawUrl.toLowerCase().includes(w));
+  if(found.length>=3){checks.push({cls:'chk-bad',txt:C.phishMany(found.length,found.slice(0,3).join(', '))});score-=30;}
+  else if(found.length>=1){checks.push({cls:'chk-warn',txt:C.phishOne(found[0])});score-=8;}
+  else{checks.push({cls:'chk-ok',txt:C.phishOk});}
+
+  // 6. URL length
+  if(rawUrl.length>150){checks.push({cls:'chk-bad',txt:C.longBad(rawUrl.length)});score-=15;}
+  else if(rawUrl.length>80){checks.push({cls:'chk-warn',txt:C.longWarn(rawUrl.length)});score-=3;}
+  else{checks.push({cls:'chk-ok',txt:C.longOk(rawUrl.length)});}
+
+  // 7. Subdomains
+  const parts=domain.split('.');
+  if(parts.length>5){checks.push({cls:'chk-bad',txt:C.subBad(parts.length-2)});score-=20;}
+  else if(parts.length>3){checks.push({cls:'chk-warn',txt:C.subWarn});score-=5;}
+  else{checks.push({cls:'chk-ok',txt:C.subOk});}
+
+  // 8. Special chars in domain
+  if(/[^a-z0-9.\-]/.test(domain)){checks.push({cls:'chk-bad',txt:C.specialBad});score-=25;}
+
+  score=Math.max(0,Math.min(100,score));
+  const level=score>=72?'safe':score>=42?'warning':'danger';
+  return{score,level,checks,domain};
+}
+
+/* ══════════════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════════════ */
+function addHistory(url,level,score){
+  history.unshift({url,level,score});
+  if(history.length>6) history=history.slice(0,6);
+  renderHistory();
+}
+function renderHistory(){
+  const sec=document.getElementById('histSection');
+  const list=document.getElementById('histList');
+  if(!history.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML=history.map((h,i)=>`
+    <div class="hist-item" onclick="reScan(${i})">
+      <div class="hist-dot ${h.level}"></div>
+      <span class="hist-url">${escHtml(h.url)}</span>
+      <span class="hist-score">${h.score}/100</span>
+    </div>`).join('');
+}
+function reScan(i){
+  document.getElementById('urlInput').value=history[i].url;
+  startScan();
+}
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ══════════════════════════════════════════════════
+   SHARE
+══════════════════════════════════════════════════ */
+function shareResult(){
+  if(!lastResult) return;
+  const L=T[lang];
+  const txt=L.shareText(lastResult.domain,lastResult.score,lastResult.level);
+  if(navigator.share){
+    navigator.share({title:'LinkReaper',text:txt}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn=document.getElementById('shareBtn');
+      const orig=btn.innerHTML;
+      btn.innerHTML='✅ <span>'+L.share+'!</span>';
+      setTimeout(()=>{btn.innerHTML=orig;},2000);
+    }).catch(()=>{});
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   MAIN SCAN
+══════════════════════════════════════════════════ */
+async function startScan(){
+  if(isScanning) return;
+  const L=T[lang];
+  const raw=document.getElementById('urlInput').value.trim();
+
+  if(!raw){
+    const inp=document.getElementById('urlInput');
+    inp.style.borderColor='var(--neon)';
+    inp.style.boxShadow='var(--shadow-red)';
+    typeText(document.getElementById('monsterText'),L.empty);
+    setTimeout(()=>{inp.style.borderColor='';inp.style.boxShadow='';},900);
+    return;
+  }
+
+  isScanning=true;
+  document.getElementById('scanBtn').disabled=true;
+  document.getElementById('resultCard').style.display='none';
+  document.getElementById('tipsCard').style.display='none';
+
+  const lc=document.getElementById('loadingCard');
+  lc.style.display='block';
+  const lsteps=document.querySelectorAll('.lstep');
+  const prog=document.getElementById('progressFill');
+  prog.style.width='0%';
+
+  document.getElementById('monAvatar').textContent='🔍';
+  typeText(document.getElementById('monsterText'),L.scanning,20);
+
+  for(let i=0;i<lsteps.length;i++){
+    lsteps.forEach((s,j)=>{
+      if(j<i)s.className='lstep done';
+      else if(j===i)s.className='lstep on';
+      else s.className='lstep';
+    });
+    prog.style.width=((i+1)/lsteps.length*100)+'%';
+    if(typeTimer) clearInterval(typeTimer);
+    typeText(document.getElementById('monsterText'),L.stepMsgs[i],16);
+    await sleep(360);
+  }
+  lsteps.forEach(s=>s.className='lstep done');
+  await sleep(150);
+  lc.style.display='none';
+
+  const result=analyzeURL(raw);
+  result.rawUrl=raw;
+  lastResult=result;
+
+  renderResult(result.score,result.level,result.checks,result.domain,raw,true);
+  addHistory(raw,result.level,result.score);
+
+  isScanning=false;
+  document.getElementById('scanBtn').disabled=false;
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ══════════════════════════════════════════════════
+   RENDER RESULT
+══════════════════════════════════════════════════ */
+function renderResult(score,level,checks,domain,rawUrl,animate){
+  const L=T[lang];
+  const card=document.getElementById('resultCard');
+
+  card.className=level; // safe | warning | danger
+  card.style.display='block';
+
+  document.getElementById('resBadge').textContent=L.badge[level];
+  document.getElementById('resultVerdict').textContent=L.verdict[level];
+  document.getElementById('resultDomain').textContent=domain||rawUrl;
+
+  if(animate){
+    countUp(document.getElementById('scoreNum'),score);
+    setTimeout(()=>{document.getElementById('scoreBar').style.width=score+'%';},120);
+  } else {
+    document.getElementById('scoreNum').textContent=score;
+    document.getElementById('scoreBar').style.width=score+'%';
+  }
+
+  // AI verdict
+  const vArr=L.ai[level];
+  const verdict=vArr[Math.floor(Math.random()*vArr.length)](domain||rawUrl,score);
+  document.getElementById('aiVerdict').textContent=verdict;
+
+  // Checks
+  document.getElementById('checksGrid').innerHTML=checks.map(c=>`
+    <div class="ci ${c.cls}">
+      <span>${c.cls==='chk-ok'?'✅':c.cls==='chk-warn'?'⚠️':'❌'}</span>
+      <span>${escHtml(c.txt)}</span>
+    </div>`).join('');
+
+  // Tips
+  if(level==='danger'){
+    const tc=document.getElementById('tipsCard');
+    const parts=L.tips.split(':');
+    tc.innerHTML=`<strong>${parts[0]}:</strong>${parts.slice(1).join(':')}`;
+    tc.style.display='block';
+  }
+
+  // Monster reaction
+  document.getElementById('monAvatar').textContent=level==='safe'?'😌':level==='warning'?'😒':'😱';
+  const short=L.monReact[level];
+  typeText(document.getElementById('monsterText'),short,22);
+
+  if(animate) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ══════════════════════════════════════════════════
+   KEYBOARD
+══════════════════════════════════════════════════ */
+document.getElementById('urlInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') startScan();
+});
+
+/* ══════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════ */
+setLang('ar');
+</script>
+</body>
+</html>
