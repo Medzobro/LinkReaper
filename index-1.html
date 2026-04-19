@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="LinkReaper — كاشف الروابط الذكي | Smart URL Safety Checker">
+  <meta name="theme-color" content="#060608">
+  <meta property="og:title"       content="LinkReaper — URL Safety">
+  <meta property="og:description" content="Smart, instant URL safety checking">
+  <meta name="twitter:card"       content="summary_large_image">
+  <title>LinkReaper — Smart URL Safety v6</title>
+
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Creepster&family=Tajawal:wght@300;400;700;900&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet"
+  >
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-base"  aria-hidden="true"></div>
+<div class="bg-lines" aria-hidden="true"></div>
+<div class="bg-grid"  aria-hidden="true"></div>
+<div id="pts"         aria-hidden="true"></div>
+
+<!-- Language Bar -->
+<nav id="langBar" aria-label="Language selector">
+  <button class="lbtn on" onclick="setLang('ar')">🇸🇦 العربية</button>
+  <div class="lsep" aria-hidden="true"></div>
+  <button class="lbtn" onclick="setLang('en')">🇺🇸 English</button>
+  <div class="lsep" aria-hidden="true"></div>
+  <button class="lbtn" onclick="setLang('fr')">🇫🇷 Français</button>
+  <div class="lsep" aria-hidden="true"></div>
+  <button class="lbtn" onclick="setLang('es')">🇪🇸 Español</button>
+  <div class="lsep" aria-hidden="true"></div>
+  <button class="lbtn" onclick="setLang('tr')">🇹🇷 Türkçe</button>
+  <div class="lsep" aria-hidden="true"></div>
+  <button class="lbtn" onclick="setLang('de')">🇩🇪 Deutsch</button>
+</nav>
+
+<main class="app">
+
+  <!-- Header -->
+  <header class="hdr">
+    <div class="logo-ring" aria-hidden="true">
+      <span class="skull">💀</span>
+    </div>
+    <h1 class="app-title">LinkReaper</h1>
+    <div class="vtag" aria-hidden="true">
+      <span class="vbadge">v6</span>
+      <div class="live-dot"></div>
+      <span class="live-txt">LIVE</span>
+    </div>
+    <p id="tagline"></p>
+  </header>
+
+  <!-- Monster -->
+  <section class="mon-box" aria-live="polite" aria-label="Assistant">
+    <div class="mon-av" id="monAv" aria-hidden="true">💀</div>
+    <div style="flex:1; min-width:0;">
+      <div class="mon-name" aria-hidden="true">// REAPER.EXE</div>
+      <div id="monTxt"><span class="tc"></span></div>
+    </div>
+  </section>
+
+  <!-- Input -->
+  <section class="inp-card">
+    <label id="inputLabel" for="urlInput"></label>
+    <div class="inp-row">
+      <input
+        type="url"
+        id="urlInput"
+        placeholder="https://example.com"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-labelledby="inputLabel"
+      >
+      <button id="scanBtn" onclick="startScan()">
+        🔍 <span id="scanBtnTxt"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Scan Progress — user sees step names, NOT API names -->
+  <section id="scanProgress" aria-live="polite" aria-label="Scan progress">
+    <div class="sp-header">
+      <span class="sp-title" id="sp-title">// جاري الفحص</span>
+      <span class="sp-pct"   id="sp-pct">0%</span>
+    </div>
+
+    <div class="sp-steps">
+
+      <div class="sp-step" id="sp-step-0">
+        <span class="sp-step-icon" aria-hidden="true" id="sp-ico-0">🧬</span>
+        <span class="sp-step-label" id="sp-lbl-0"></span>
+        <span class="sp-step-status ss-wait" id="sp-sts-0">—</span>
+      </div>
+
+      <div class="sp-step" id="sp-step-1">
+        <span class="sp-step-icon" aria-hidden="true" id="sp-ico-1">🛡️</span>
+        <span class="sp-step-label" id="sp-lbl-1"></span>
+        <span class="sp-step-status ss-wait" id="sp-sts-1">—</span>
+      </div>
+
+      <div class="sp-step" id="sp-step-2">
+        <span class="sp-step-icon" aria-hidden="true" id="sp-ico-2">🔬</span>
+        <span class="sp-step-label" id="sp-lbl-2"></span>
+        <span class="sp-step-status ss-wait" id="sp-sts-2">—</span>
+      </div>
+
+      <div class="sp-step" id="sp-step-3">
+        <span class="sp-step-icon" aria-hidden="true" id="sp-ico-3">🌐</span>
+        <span class="sp-step-label" id="sp-lbl-3"></span>
+        <span class="sp-step-status ss-wait" id="sp-sts-3">—</span>
+      </div>
+
+      <div class="sp-step" id="sp-step-4">
+        <span class="sp-step-icon" aria-hidden="true" id="sp-ico-4">🎯</span>
+        <span class="sp-step-label" id="sp-lbl-4"></span>
+        <span class="sp-step-status ss-wait" id="sp-sts-4">—</span>
+      </div>
+
+    </div>
+
+    <div class="prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <div id="progFill"></div>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section id="resCard" aria-live="polite" aria-label="Scan result">
+
+    <!-- Score ring + verdict -->
+    <div class="res-top">
+      <div class="ring-wrap" aria-hidden="true">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <circle class="ring-bg"   cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" id="ringFill" cx="40" cy="40" r="34"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ringNum">0</div>
+          <div class="ring-lbl">/100</div>
+        </div>
+      </div>
+      <div class="res-meta">
+        <div id="resVerdict"></div>
+        <div id="resDomain"></div>
+        <div class="threat-tags" id="threatTags" aria-label="Threat indicators"></div>
+      </div>
+    </div>
+
+    <!-- AI verdict message -->
+    <div id="aiVerdict" aria-live="polite"></div>
+
+    <!-- Detailed checks (no API names) -->
+    <div class="sec-hdr" id="chkTitle"></div>
+    <div class="chk-grid" id="chkGrid" role="list"></div>
+
+    <!-- Share -->
+    <div class="share-row">
+      <button class="share-btn" id="shareBtn" onclick="doShare()">
+        🔗 <span id="shareTxt"></span>
+      </button>
+    </div>
+
+  </section>
+
+  <!-- Safety tips (shown only for danger) -->
+  <aside id="tipsCard" role="alert"></aside>
+
+  <!-- Disclaimer -->
+  <p class="disclaimer" id="disclaimerEl"></p>
+
+  <!-- AI Banner -->
+  <aside class="ai-banner">
+    <div class="ai-icon" aria-hidden="true">🤖</div>
+    <div>
+      <div class="ai-ttl" id="bannerTitle"></div>
+      <div class="ai-dsc" id="bannerDesc"></div>
+    </div>
+  </aside>
+
+  <!-- Social -->
+  <div class="soc-row">
+    <a class="soc-btn soc-x"
+       href="https://x.com/LinkReaper"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="Follow LinkReaper on X">
+      <span aria-hidden="true">𝕏</span>
+      <span id="xTxt"></span>
+    </a>
+    <a class="soc-btn soc-tg"
+       href="https://t.me/LinkReaper"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="LinkReaper on Telegram">
+      <span aria-hidden="true">✈️</span>
+      <span id="tgTxt"></span>
+    </a>
+  </div>
+
+  <!-- History -->
+  <section id="histSec" aria-label="Scan history">
+    <div class="sec-lbl" id="histLbl"></div>
+    <div id="histList" role="list"></div>
+  </section>
+
+  <footer id="footerEl"></footer>
+
+</main>
+
+<!-- Scripts — order matters -->
+<script src="js/translations.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
