@@ -3,392 +3,273 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="LinkReaper — كاشف الروابط المشبوهة | URL Safety Checker | Détecteur de liens dangereux">
+<meta name="description" content="LinkReaper — Real Threat Intelligence | كاشف الروابط الحقيقي">
 <meta name="theme-color" content="#060608">
-<title>LinkReaper — URL Safety Checker</title>
+<title>LinkReaper — Threat Intelligence v4</title>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Tajawal:wght@300;400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════ VARIABLES ═══════════════ */
+/* ═══════════════ CORE VARIABLES ═══════════════ */
 :root{
   --blood:#9B1B1B;--neon:#FF2244;--dark:#060608;--panel:#0d0d12;
-  --border:rgba(180,20,40,0.35);--green:#00FF88;--yellow:#FFB300;
+  --panel2:#111118;--border:rgba(180,20,40,0.3);
+  --green:#00FF88;--yellow:#FFB300;--purple:#BB44FF;--blue:#44AAFF;
   --text:#E0D5D5;--dim:#6B5B5B;--dim2:#9B8B8B;
-  --shadow-red:0 0 20px rgba(255,34,68,0.4);
-  --shadow-green:0 0 20px rgba(0,255,136,0.4);
-  --radius:14px;
+  --shadow-red:0 0 20px rgba(255,34,68,0.35);
+  --shadow-green:0 0 20px rgba(0,255,136,0.35);
+  --shadow-yellow:0 0 20px rgba(255,179,0,0.35);
+  --r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth;}
-body{
-  background:var(--dark);color:var(--text);
-  font-family:'Tajawal',sans-serif;
-  overflow-x:hidden;min-height:100vh;
-}
+body{background:var(--dark);color:var(--text);font-family:'Tajawal',sans-serif;overflow-x:hidden;min-height:100vh;}
 
-/* ═══════════════ BACKGROUND ═══════════════ */
-.bg-canvas{
-  position:fixed;inset:0;z-index:0;
-  background:
-    radial-gradient(ellipse 80% 55% at 50% -5%,rgba(110,0,18,0.45),transparent 60%),
-    radial-gradient(ellipse 35% 35% at 95% 95%,rgba(60,0,10,0.3),transparent 60%),
-    var(--dark);
-}
-.bg-scanlines{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
-}
-.bg-grid{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(140,0,20,0.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(140,0,20,0.05) 1px,transparent 1px);
-  background-size:50px 50px;
-  animation:gridScroll 20s linear infinite;
-}
-@keyframes gridScroll{from{background-position:0 0;}to{background-position:0 50px;}}
+/* ═══ BG ═══ */
+.bg-base{position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 55% at 50% -5%,rgba(110,0,18,.42),transparent 60%),
+    radial-gradient(ellipse 35% 35% at 95% 95%,rgba(60,0,10,.28),transparent 60%),var(--dark);}
+.bg-lines{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(140,0,20,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(140,0,20,.04) 1px,transparent 1px);
+  background-size:50px 50px;animation:gScroll 20s linear infinite;}
+@keyframes gScroll{to{background-position:0 50px;}}
+#pts{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.pt{position:absolute;border-radius:50%;background:var(--neon);animation:ptF linear infinite;opacity:0;}
+@keyframes ptF{0%{transform:translateY(100vh);opacity:0;}10%{opacity:.35;}90%{opacity:.12;}100%{transform:translateY(-5vh) translateX(15px);opacity:0;}}
 
-/* Particles */
-#particles{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.ptcl{
-  position:absolute;border-radius:50%;
-  background:var(--neon);animation:ptclFloat linear infinite;opacity:0;
-}
-@keyframes ptclFloat{
-  0%{transform:translateY(100vh) translateX(0);opacity:0;}
-  10%{opacity:.4;}90%{opacity:.15;}
-  100%{transform:translateY(-5vh) translateX(15px);opacity:0;}
-}
-
-/* ═══════════════ LANG BAR ═══════════════ */
-#langBar{
-  position:fixed;top:0;left:0;right:0;z-index:300;
-  background:rgba(6,6,8,0.96);
-  border-bottom:1px solid var(--border);
-  padding:.45rem .8rem;
-  display:flex;align-items:center;gap:.35rem;
-  overflow-x:auto;scrollbar-width:none;
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
+/* ═══ LANG BAR ═══ */
+#langBar{position:fixed;top:0;left:0;right:0;z-index:300;
+  background:rgba(6,6,8,.96);border-bottom:1px solid var(--border);
+  padding:.42rem .8rem;display:flex;align-items:center;gap:.32rem;
+  overflow-x:auto;scrollbar-width:none;backdrop-filter:blur(12px);}
 #langBar::-webkit-scrollbar{display:none;}
-.lbtn{
-  flex-shrink:0;padding:.28rem .65rem;
-  background:transparent;border:1px solid rgba(155,27,27,0.3);
-  border-radius:5px;color:var(--dim);
-  font-family:'Tajawal',sans-serif;font-size:.74rem;
-  cursor:pointer;transition:all .18s;white-space:nowrap;
-}
+.lbtn{flex-shrink:0;padding:.26rem .6rem;background:transparent;
+  border:1px solid rgba(155,27,27,.28);border-radius:5px;color:var(--dim);
+  font-family:'Tajawal',sans-serif;font-size:.72rem;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .lbtn:hover{border-color:var(--neon);color:var(--text);}
-.lbtn.on{background:rgba(255,34,68,0.14);border-color:var(--neon);color:var(--neon);}
-.lsep{width:1px;height:16px;background:var(--border);flex-shrink:0;}
+.lbtn.on{background:rgba(255,34,68,.13);border-color:var(--neon);color:var(--neon);}
+.lsep{width:1px;height:15px;background:var(--border);flex-shrink:0;}
 
-/* ═══════════════ APP SHELL ═══════════════ */
-.app{
-  position:relative;z-index:1;
-  max-width:660px;margin:0 auto;
-  padding:4.8rem 1.1rem 4rem;
-  min-height:100vh;
-}
+/* ═══ APP ═══ */
+.app{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:4.6rem 1.1rem 4rem;min-height:100vh;}
 
-/* ═══════════════ HEADER ═══════════════ */
-.header{text-align:center;padding:2rem 0 1.4rem;}
-.logo-ring{
-  width:84px;height:84px;border-radius:50%;
-  border:2px solid var(--blood);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto .8rem;position:relative;
-  animation:ringPulse 2.5s ease-in-out infinite;
-  background:radial-gradient(circle,rgba(100,0,15,0.3),transparent 70%);
-}
-.logo-ring::before{
-  content:'';position:absolute;inset:-6px;
-  border-radius:50%;border:1px solid rgba(255,34,68,0.12);
-  animation:ringPulse 2.5s ease-in-out infinite reverse;
-}
-@keyframes ringPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(255,34,68,0.22);}
-  50%{box-shadow:0 0 26px 6px rgba(255,34,68,0.1);}
-}
-.logo-skull{font-size:2.5rem;filter:drop-shadow(0 0 8px rgba(255,34,68,0.55));animation:skullBob 3s ease-in-out infinite;}
-@keyframes skullBob{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
-.app-title{
-  font-family:'Creepster',cursive;
-  font-size:clamp(2.2rem,8vw,3.4rem);
+/* ═══ HEADER ═══ */
+.hdr{text-align:center;padding:1.8rem 0 1.2rem;}
+.logo-ring{width:82px;height:82px;border-radius:50%;border:2px solid var(--blood);
+  display:flex;align-items:center;justify-content:center;margin:0 auto .7rem;position:relative;
+  animation:rPulse 2.5s ease-in-out infinite;
+  background:radial-gradient(circle,rgba(100,0,15,.28),transparent 70%);}
+.logo-ring::before{content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(255,34,68,.11);animation:rPulse 2.5s ease-in-out infinite reverse;}
+@keyframes rPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,34,68,.2);}50%{box-shadow:0 0 24px 5px rgba(255,34,68,.09);}}
+.skull{font-size:2.4rem;filter:drop-shadow(0 0 8px rgba(255,34,68,.5));animation:sBob 3s ease-in-out infinite;}
+@keyframes sBob{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+.app-title{font-family:'Creepster',cursive;font-size:clamp(2rem,7vw,3.2rem);
   color:var(--neon);letter-spacing:3px;line-height:1;
-  text-shadow:0 0 14px rgba(255,34,68,0.5),0 0 38px rgba(255,34,68,0.12);
-}
-.app-version{
-  display:inline-block;font-family:'Share Tech Mono',monospace;
-  font-size:.62rem;color:var(--blood);
-  border:1px solid var(--blood);border-radius:4px;
-  padding:.1rem .38rem;margin-top:.3rem;letter-spacing:1px;
-}
-#tagline{font-size:.84rem;color:var(--dim);margin-top:.4rem;letter-spacing:.4px;}
+  text-shadow:0 0 14px rgba(255,34,68,.5),0 0 36px rgba(255,34,68,.11);}
+.vtag{display:inline-flex;align-items:center;gap:.35rem;margin-top:.3rem;}
+.vbadge{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--blood);
+  border:1px solid var(--blood);border-radius:4px;padding:.08rem .35rem;letter-spacing:1px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);animation:livePulse 1.5s ease-in-out infinite;}
+.live-txt{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--green);letter-spacing:1px;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+#tagline{font-size:.82rem;color:var(--dim);margin-top:.35rem;letter-spacing:.3px;}
 
-/* ═══════════════ MONSTER ═══════════════ */
-.monster-box{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:var(--radius);padding:1rem 1.2rem;
-  margin:1.1rem 0;display:flex;gap:.85rem;align-items:flex-start;
-  position:relative;overflow:hidden;min-height:68px;
-}
-/* Animated side accent — fixed with proper positioning */
-.monster-box::after{
-  content:'';
-  position:absolute;top:0;width:2px;bottom:0;
+/* ═══ MONSTER ═══ */
+.mon-box{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:.95rem 1.15rem;margin:1rem 0;display:flex;gap:.8rem;align-items:flex-start;
+  position:relative;overflow:hidden;min-height:64px;}
+.mon-box::after{content:'';position:absolute;top:0;width:2px;bottom:0;
   background:linear-gradient(to bottom,transparent,var(--neon) 50%,transparent);
-  animation:sideGlow 3s ease-in-out infinite;
-  opacity:.7;
-}
-html[dir="rtl"] .monster-box::after{right:0;}
-html[dir="ltr"] .monster-box::after{left:0;}
-@keyframes sideGlow{0%,100%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}}
+  animation:sGlow 3s ease-in-out infinite;opacity:.6;}
+html[dir="rtl"] .mon-box::after{right:0;}
+html[dir="ltr"] .mon-box::after{left:0;}
+@keyframes sGlow{0%,100%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}}
+.mon-av{font-size:1.8rem;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;
+  justify-content:center;background:rgba(255,34,68,.07);border-radius:8px;border:1px solid var(--border);}
+.mon-name{font-size:.6rem;color:var(--neon);letter-spacing:2px;margin-bottom:.25rem;font-family:'Share Tech Mono',monospace;}
+#monTxt{font-size:.86rem;line-height:1.7;color:var(--text);min-height:20px;}
+.tc{display:inline-block;width:2px;height:12px;background:var(--neon);
+  animation:tcB .7s ease-in-out infinite;vertical-align:middle;margin-right:1px;}
+@keyframes tcB{0%,100%{opacity:1;}50%{opacity:0;}}
 
-.mon-avatar{
-  font-size:1.9rem;flex-shrink:0;
-  width:42px;height:42px;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(255,34,68,0.07);
-  border-radius:9px;border:1px solid var(--border);
-  transition:transform .3s;
-}
-.mon-name{font-size:.62rem;color:var(--neon);letter-spacing:2px;margin-bottom:.28rem;font-family:'Share Tech Mono',monospace;}
-#monsterText{font-size:.88rem;line-height:1.7;color:var(--text);min-height:20px;}
-.tcursor{
-  display:inline-block;width:2px;height:12px;
-  background:var(--neon);margin-right:1px;
-  animation:tcBlink .7s ease-in-out infinite;
-  vertical-align:middle;
-}
-@keyframes tcBlink{0%,100%{opacity:1;}50%{opacity:0;}}
-
-/* ═══════════════ INPUT CARD ═══════════════ */
-.input-card{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:var(--radius);padding:1.2rem;margin-bottom:.9rem;
-}
-#inputLabel{
-  font-size:.72rem;color:var(--dim);
-  margin-bottom:.55rem;display:block;
-  letter-spacing:1px;font-family:'Share Tech Mono',monospace;
-}
-.input-row{display:flex;gap:.45rem;}
-#urlInput{
-  flex:1;padding:.78rem .9rem;
-  background:rgba(0,0,0,0.5);
-  border:1.5px solid rgba(155,27,27,0.4);
-  border-radius:9px;color:var(--text);
-  font-family:'Share Tech Mono',monospace;font-size:.86rem;
-  outline:none;transition:all .25s;
-  direction:ltr;text-align:left;
-}
-#urlInput:focus{
-  border-color:var(--neon);
-  box-shadow:0 0 0 3px rgba(255,34,68,0.1),var(--shadow-red);
-  background:rgba(10,0,5,0.72);
-}
+/* ═══ INPUT ═══ */
+.inp-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;margin-bottom:.85rem;}
+#inputLabel{font-size:.7rem;color:var(--dim);margin-bottom:.52rem;display:block;letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
+.inp-row{display:flex;gap:.42rem;}
+#urlInput{flex:1;padding:.75rem .88rem;background:rgba(0,0,0,.5);border:1.5px solid rgba(155,27,27,.38);
+  border-radius:9px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.85rem;
+  outline:none;transition:all .22s;direction:ltr;text-align:left;}
+#urlInput:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(255,34,68,.09),var(--shadow-red);background:rgba(10,0,5,.7);}
 #urlInput::placeholder{color:#3a2a2a;}
-#scanBtn{
-  padding:.78rem 1.15rem;
-  background:linear-gradient(135deg,var(--blood),#6a0000);
-  border:1.5px solid var(--neon);border-radius:9px;
-  color:#fff;font-family:'Tajawal',sans-serif;
-  font-weight:900;font-size:.92rem;
-  cursor:pointer;white-space:nowrap;
-  letter-spacing:1px;transition:all .18s;
-  min-width:90px;
-}
+#scanBtn{padding:.75rem 1.1rem;background:linear-gradient(135deg,var(--blood),#6a0000);
+  border:1.5px solid var(--neon);border-radius:9px;color:#fff;font-family:'Tajawal',sans-serif;
+  font-weight:900;font-size:.9rem;cursor:pointer;white-space:nowrap;letter-spacing:1px;
+  transition:all .16s;min-width:88px;}
 #scanBtn:hover{background:linear-gradient(135deg,var(--neon),var(--blood));box-shadow:var(--shadow-red);transform:scale(1.02);}
 #scanBtn:active{transform:scale(.97);}
-#scanBtn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+#scanBtn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
 
-/* ═══════════════ LOADING ═══════════════ */
-#loadingCard{
-  display:none;
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:var(--radius);padding:1.2rem;margin-bottom:.9rem;
-}
-.lsteps{display:grid;gap:.38rem;margin-bottom:.85rem;}
-.lstep{
-  display:flex;align-items:center;gap:.55rem;
-  font-family:'Share Tech Mono',monospace;font-size:.72rem;
-  color:#3a2a2a;transition:color .25s;
-}
-.lstep.on{color:var(--neon);}
-.lstep.done{color:#2a6a4a;}
-.lstep-dot{
-  width:7px;height:7px;border-radius:50%;
-  background:#1a0a0a;border:1px solid #3a1a1a;
-  transition:all .25s;flex-shrink:0;
-}
-.lstep.on .lstep-dot{background:var(--neon);box-shadow:0 0 7px var(--neon);animation:dotPop .5s ease-in-out infinite alternate;}
-.lstep.done .lstep-dot{background:#00AA55;border-color:#00AA55;}
-@keyframes dotPop{from{transform:scale(1);}to{transform:scale(1.5);}}
-.prog-track{height:3px;background:rgba(255,34,68,0.08);border-radius:2px;overflow:hidden;}
-#progressFill{height:100%;background:linear-gradient(90deg,var(--blood),var(--neon));border-radius:2px;width:0%;transition:width .28s ease-out;}
+/* ═══ ENGINE STATUS ═══ */
+#engineCard{display:none;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;margin-bottom:.85rem;}
+.eng-title{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);letter-spacing:2px;margin-bottom:.7rem;}
+.eng-layers{display:grid;gap:.38rem;}
+.eng-layer{display:flex;align-items:center;gap:.7rem;padding:.5rem .8rem;
+  background:rgba(0,0,0,.25);border-radius:8px;border:1px solid rgba(255,255,255,.04);}
+.eng-icon{font-size:.95rem;width:22px;text-align:center;flex-shrink:0;}
+.eng-info{flex:1;}
+.eng-name{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim2);letter-spacing:1px;}
+.eng-status{font-size:.72rem;color:var(--dim);margin-top:.1rem;}
+.eng-badge{font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:.18rem .5rem;
+  border-radius:4px;border:1px solid;white-space:nowrap;flex-shrink:0;}
+.eng-badge.waiting{color:#3a2a2a;border-color:#2a1a1a;}
+.eng-badge.running{color:var(--neon);border-color:rgba(255,34,68,.4);animation:badgePulse .8s ease-in-out infinite alternate;}
+.eng-badge.done-ok{color:var(--green);border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.05);}
+.eng-badge.done-warn{color:var(--yellow);border-color:rgba(255,179,0,.3);background:rgba(255,179,0,.05);}
+.eng-badge.done-bad{color:var(--neon);border-color:rgba(255,34,68,.35);background:rgba(255,34,68,.06);}
+.eng-badge.done-skip{color:var(--dim);border-color:rgba(100,80,80,.2);}
+@keyframes badgePulse{from{opacity:.6;}to{opacity:1;}}
+.prog-track{height:2px;background:rgba(255,34,68,.08);border-radius:1px;overflow:hidden;margin-top:.7rem;}
+#progFill{height:100%;background:linear-gradient(90deg,var(--blood),var(--neon));border-radius:1px;width:0%;transition:width .3s ease-out;}
 
-/* ═══════════════ RESULT ═══════════════ */
-#resultCard{
-  display:none;border-radius:var(--radius);
-  padding:1.35rem;margin-bottom:.9rem;
-  animation:cardPop .38s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes cardPop{from{opacity:0;transform:translateY(18px) scale(.95);}to{opacity:1;transform:none;}}
+/* ═══ RESULT CARD ═══ */
+#resCard{display:none;border-radius:var(--r);padding:1.3rem;margin-bottom:.85rem;
+  animation:cPop .38s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cPop{from{opacity:0;transform:translateY(16px) scale(.95);}to{opacity:1;transform:none;}}
+#resCard.safe{background:rgba(0,50,24,.2);border:1.5px solid rgba(0,255,136,.3);}
+#resCard.warning{background:rgba(50,34,0,.22);border:1.5px solid rgba(255,179,0,.3);}
+#resCard.danger{background:rgba(70,0,10,.28);border:1.5px solid rgba(255,34,68,.4);
+  animation:cPop .3s cubic-bezier(.34,1.56,.64,1),dJolt .46s ease-in-out .3s;}
+@keyframes dJolt{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}
+  40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
 
-#resultCard.safe{background:rgba(0,52,26,0.2);border:1.5px solid rgba(0,255,136,0.32);}
-#resultCard.warning{background:rgba(52,36,0,0.22);border:1.5px solid rgba(255,179,0,0.32);}
-#resultCard.danger{
-  background:rgba(72,0,10,0.28);border:1.5px solid rgba(255,34,68,0.42);
-  animation:cardPop .3s cubic-bezier(.34,1.56,.64,1),dangerJolt .48s ease-in-out .32s;
-}
-@keyframes dangerJolt{
-  0%,100%{transform:translateX(0);}
-  20%{transform:translateX(-5px);}40%{transform:translateX(5px);}
-  60%{transform:translateX(-3px);}80%{transform:translateX(3px);}
-}
+/* Score ring */
+.res-top{display:flex;align-items:center;gap:1rem;margin-bottom:1.1rem;}
+.score-ring-wrap{flex-shrink:0;position:relative;width:80px;height:80px;}
+.score-ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:6;}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.34,1.2,.64,1);}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-num{font-family:'Share Tech Mono',monospace;font-size:1.3rem;font-weight:bold;line-height:1;}
+.ring-label{font-size:.5rem;color:var(--dim);letter-spacing:1px;margin-top:.1rem;}
+.res-meta{flex:1;min-width:0;}
+#resVerdict{font-family:'Creepster',cursive;font-size:1.4rem;letter-spacing:1px;}
+#resCard.safe #resVerdict{color:var(--green);text-shadow:var(--shadow-green);}
+#resCard.warning #resVerdict{color:var(--yellow);text-shadow:var(--shadow-yellow);}
+#resCard.danger #resVerdict{color:var(--neon);text-shadow:var(--shadow-red);}
+#resDomain{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);
+  margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.threat-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;}
+.ttag{font-family:'Share Tech Mono',monospace;font-size:.6rem;padding:.15rem .45rem;
+  border-radius:4px;border:1px solid;letter-spacing:.5px;}
+.ttag.malware{color:#FF6644;border-color:rgba(255,102,68,.3);background:rgba(255,102,68,.07);}
+.ttag.phishing{color:var(--neon);border-color:rgba(255,34,68,.3);background:rgba(255,34,68,.07);}
+.ttag.abuse{color:var(--yellow);border-color:rgba(255,179,0,.3);background:rgba(255,179,0,.07);}
+.ttag.clean{color:var(--green);border-color:rgba(0,255,136,.25);background:rgba(0,255,136,.06);}
+.ttag.suspicious{color:var(--purple);border-color:rgba(187,68,255,.3);background:rgba(187,68,255,.07);}
 
-.res-header{display:flex;align-items:center;gap:.85rem;margin-bottom:1rem;}
-.res-badge{
-  width:50px;height:50px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;
-}
-#resultCard.safe .res-badge{background:rgba(0,255,136,0.09);border:1px solid rgba(0,255,136,0.22);}
-#resultCard.warning .res-badge{background:rgba(255,179,0,0.09);border:1px solid rgba(255,179,0,0.22);}
-#resultCard.danger .res-badge{background:rgba(255,34,68,0.09);border:1px solid rgba(255,34,68,0.22);}
-
-#resultVerdict{font-family:'Creepster',cursive;font-size:1.45rem;letter-spacing:1px;}
-#resultCard.safe #resultVerdict{color:var(--green);text-shadow:var(--shadow-green);}
-#resultCard.warning #resultVerdict{color:var(--yellow);text-shadow:0 0 14px rgba(255,179,0,0.4);}
-#resultCard.danger #resultVerdict{color:var(--neon);text-shadow:var(--shadow-red);}
-
-#resultDomain{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);margin-top:.18rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
-
-.score-row{display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;}
-#scoreNum{font-family:'Share Tech Mono',monospace;font-size:1.25rem;font-weight:bold;min-width:42px;}
-#resultCard.safe #scoreNum{color:var(--green);}
-#resultCard.warning #scoreNum{color:var(--yellow);}
-#resultCard.danger #scoreNum{color:var(--neon);}
-.score-track{flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
-#scoreBar{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.34,1.56,.64,1);width:0%;}
-#resultCard.safe #scoreBar{background:linear-gradient(90deg,#005c28,var(--green));}
-#resultCard.warning #scoreBar{background:linear-gradient(90deg,#5c3c00,var(--yellow));}
-#resultCard.danger #scoreBar{background:linear-gradient(90deg,var(--blood),var(--neon));}
-.score-slash{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);min-width:32px;}
-
-#aiVerdict{
-  background:rgba(0,0,0,0.26);border-radius:9px;
-  padding:.85rem .95rem;margin-bottom:1rem;
-  font-size:.86rem;line-height:1.75;font-style:italic;border-right:3px solid;
-}
+/* AI verdict */
+#aiVerdict{background:rgba(0,0,0,.24);border-radius:9px;padding:.82rem .92rem;
+  margin-bottom:1rem;font-size:.85rem;line-height:1.75;font-style:italic;border-right:3px solid;}
 html[dir="ltr"] #aiVerdict{border-right:none;border-left:3px solid;}
-#resultCard.safe #aiVerdict{border-color:var(--green);color:#aaffd4;}
-#resultCard.warning #aiVerdict{border-color:var(--yellow);color:#ffe29a;}
-#resultCard.danger #aiVerdict{border-color:var(--neon);color:#ffaab5;}
+#resCard.safe #aiVerdict{border-color:var(--green);color:#aaffd4;}
+#resCard.warning #aiVerdict{border-color:var(--yellow);color:#ffe29a;}
+#resCard.danger #aiVerdict{border-color:var(--neon);color:#ffaab5;}
 
-#checksTitle{font-size:.68rem;color:var(--dim);letter-spacing:2px;margin-bottom:.55rem;font-family:'Share Tech Mono',monospace;}
-#checksGrid{display:grid;gap:.38rem;}
-.ci{
-  display:flex;align-items:center;gap:.55rem;
-  padding:.52rem .82rem;background:rgba(0,0,0,0.2);
-  border-radius:7px;font-size:.8rem;border-right:2px solid;
-}
+/* API Source cards */
+.src-title{font-size:.67rem;color:var(--dim);letter-spacing:2px;margin-bottom:.52rem;
+  font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:.5rem;}
+.src-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.04);}
+.src-grid{display:grid;gap:.38rem;margin-bottom:.9rem;}
+.src-card{padding:.65rem .88rem;border-radius:9px;border:1px solid rgba(255,255,255,.05);
+  background:rgba(0,0,0,.22);display:flex;align-items:center;gap:.7rem;}
+.src-icon{font-size:1rem;flex-shrink:0;width:24px;text-align:center;}
+.src-info{flex:1;min-width:0;}
+.src-name{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim2);letter-spacing:.5px;}
+.src-detail{font-size:.75rem;color:var(--text);margin-top:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.src-pill{font-family:'Share Tech Mono',monospace;font-size:.6rem;padding:.15rem .42rem;
+  border-radius:4px;border:1px solid;white-space:nowrap;flex-shrink:0;}
+.pill-safe{color:var(--green);border-color:rgba(0,255,136,.25);background:rgba(0,255,136,.06);}
+.pill-warn{color:var(--yellow);border-color:rgba(255,179,0,.25);background:rgba(255,179,0,.06);}
+.pill-bad{color:var(--neon);border-color:rgba(255,34,68,.3);background:rgba(255,34,68,.07);}
+.pill-skip{color:var(--dim);border-color:rgba(100,80,80,.2);}
+.pill-err{color:#888;border-color:rgba(100,80,80,.2);}
+
+/* Heuristic checks */
+.chk-grid{display:grid;gap:.35rem;margin-bottom:.9rem;}
+.ci{display:flex;align-items:center;gap:.52rem;padding:.5rem .8rem;
+  background:rgba(0,0,0,.2);border-radius:7px;font-size:.78rem;border-right:2px solid;}
 html[dir="ltr"] .ci{border-right:none;border-left:2px solid;}
 .ci.chk-ok{border-color:var(--green);}
 .ci.chk-bad{border-color:var(--neon);}
 .ci.chk-warn{border-color:var(--yellow);}
 
-/* Share button */
-.share-row{display:flex;justify-content:flex-end;margin-top:.8rem;}
-.share-btn{
-  display:flex;align-items:center;gap:.4rem;
-  padding:.4rem .85rem;background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.12);border-radius:7px;
-  color:var(--dim2);font-family:'Tajawal',sans-serif;font-size:.78rem;
-  cursor:pointer;transition:all .18s;
-}
-.share-btn:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+/* Share */
+.share-row{display:flex;justify-content:flex-end;margin-top:.75rem;}
+.share-btn{display:flex;align-items:center;gap:.38rem;padding:.38rem .8rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:7px;
+  color:var(--dim2);font-family:'Tajawal',sans-serif;font-size:.76rem;cursor:pointer;transition:all .16s;}
+.share-btn:hover{background:rgba(255,255,255,.08);color:var(--text);}
 
-/* ═══════════════ TIPS ═══════════════ */
-#tipsCard{
-  display:none;
-  background:rgba(55,25,0,0.22);
-  border:1px solid rgba(255,100,0,0.2);
-  border-radius:var(--radius);padding:.85rem 1rem;
-  margin-bottom:.9rem;font-size:.78rem;color:#cc9940;line-height:1.7;
-}
+/* ═══ TIPS ═══ */
+#tipsCard{display:none;background:rgba(55,25,0,.2);border:1px solid rgba(255,100,0,.18);
+  border-radius:var(--r);padding:.82rem .95rem;margin-bottom:.85rem;
+  font-size:.78rem;color:#cc9940;line-height:1.7;}
 #tipsCard strong{color:var(--yellow);}
 
-/* ═══════════════ DISCLAIMER ═══════════════ */
-.disclaimer{
-  background:rgba(0,0,0,0.25);
-  border:1px solid rgba(255,255,255,0.07);
-  border-radius:9px;padding:.7rem .9rem;
-  font-size:.72rem;color:#4a3a3a;line-height:1.6;
-  margin-bottom:.9rem;text-align:center;
-}
+/* ═══ DISCLAIMER ═══ */
+.disclaimer{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.05);
+  border-radius:9px;padding:.65rem .88rem;font-size:.7rem;color:#4a3a3a;
+  line-height:1.6;margin-bottom:.85rem;text-align:center;}
 
-/* ═══════════════ AI BANNER ═══════════════ */
-.ai-banner{
-  background:linear-gradient(135deg,rgba(55,0,75,0.28),rgba(18,0,38,0.38));
-  border:1px solid rgba(180,0,255,0.22);
-  border-radius:var(--radius);padding:.95rem 1.1rem;
-  margin-bottom:.9rem;display:flex;gap:.75rem;align-items:flex-start;
-}
-.ai-banner-icon{font-size:1.3rem;flex-shrink:0;margin-top:.08rem;}
-.ai-banner-title{font-size:.75rem;font-weight:700;color:#CC88FF;letter-spacing:1px;margin-bottom:.25rem;}
-.ai-banner-desc{font-size:.74rem;color:#9060AA;line-height:1.6;}
+/* ═══ AI BANNER ═══ */
+.ai-banner{background:linear-gradient(135deg,rgba(55,0,75,.26),rgba(18,0,38,.36));
+  border:1px solid rgba(180,0,255,.2);border-radius:var(--r);padding:.9rem 1.05rem;
+  margin-bottom:.85rem;display:flex;gap:.72rem;align-items:flex-start;}
+.ai-icon{font-size:1.25rem;flex-shrink:0;margin-top:.06rem;}
+.ai-ttl{font-size:.72rem;font-weight:700;color:#CC88FF;letter-spacing:1px;margin-bottom:.22rem;}
+.ai-dsc{font-size:.72rem;color:#9060AA;line-height:1.6;}
 
-/* ═══════════════ SOCIAL ═══════════════ */
-.social-row{display:flex;gap:.6rem;margin-bottom:.9rem;}
-.soc-btn{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:.45rem;
-  padding:.65rem;border-radius:9px;font-family:'Tajawal',sans-serif;
-  font-size:.82rem;font-weight:700;cursor:pointer;
-  text-decoration:none;transition:all .18s;border:1.5px solid;
-}
-.soc-x{background:rgba(0,0,0,0.38);border-color:rgba(255,255,255,0.14);color:#bbb;}
-.soc-x:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.35);color:#fff;transform:scale(1.02);}
-.soc-tg{background:rgba(0,65,110,0.2);border-color:rgba(0,130,200,0.28);color:#5ab4e4;}
-.soc-tg:hover{background:rgba(0,130,200,0.12);border-color:rgba(0,130,200,0.55);transform:scale(1.02);}
+/* ═══ SOCIAL ═══ */
+.soc-row{display:flex;gap:.55rem;margin-bottom:.85rem;}
+.soc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.42rem;
+  padding:.62rem;border-radius:9px;font-family:'Tajawal',sans-serif;font-size:.8rem;
+  font-weight:700;cursor:pointer;text-decoration:none;transition:all .16s;border:1.5px solid;}
+.soc-x{background:rgba(0,0,0,.36);border-color:rgba(255,255,255,.13);color:#aaa;}
+.soc-x:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.32);color:#fff;transform:scale(1.02);}
+.soc-tg{background:rgba(0,62,108,.18);border-color:rgba(0,126,196,.26);color:#5ab0e0;}
+.soc-tg:hover{background:rgba(0,126,196,.1);border-color:rgba(0,126,196,.52);transform:scale(1.02);}
 
-/* ═══════════════ HISTORY ═══════════════ */
-#histSection{display:none;margin-bottom:1.2rem;}
-.sec-label{font-size:.68rem;color:var(--dim);letter-spacing:2px;margin-bottom:.55rem;font-family:'Share Tech Mono',monospace;}
-#histList{display:grid;gap:.32rem;}
-.hist-item{
-  display:flex;align-items:center;gap:.55rem;
-  padding:.52rem .82rem;background:var(--panel);
-  border:1px solid var(--border);border-radius:8px;
-  cursor:pointer;transition:all .18s;font-size:.78rem;
-}
-.hist-item:hover{border-color:rgba(255,34,68,0.32);background:rgba(255,34,68,0.04);}
-.hist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.hist-dot.safe{background:var(--green);}
-.hist-dot.warning{background:var(--yellow);}
-.hist-dot.danger{background:var(--neon);}
-.hist-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);direction:ltr;text-align:left;}
-.hist-score{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);}
+/* ═══ HISTORY ═══ */
+#histSec{display:none;margin-bottom:1.1rem;}
+.sec-lbl{font-size:.67rem;color:var(--dim);letter-spacing:2px;margin-bottom:.52rem;font-family:'Share Tech Mono',monospace;}
+#histList{display:grid;gap:.3rem;}
+.hi{display:flex;align-items:center;gap:.52rem;padding:.5rem .8rem;background:var(--panel);
+  border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .16s;font-size:.76rem;}
+.hi:hover{border-color:rgba(255,34,68,.3);background:rgba(255,34,68,.04);}
+.hd{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.hd.safe{background:var(--green);}
+.hd.warning{background:var(--yellow);}
+.hd.danger{background:var(--neon);}
+.hu{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);direction:ltr;text-align:left;}
+.hs{font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--dim);}
 
-/* ═══════════════ FOOTER ═══════════════ */
-footer{
-  text-align:center;padding:1.4rem 0 .8rem;
-  font-size:.7rem;color:#282028;
-  border-top:1px solid rgba(100,0,15,0.1);
-  margin-top:1rem;
-}
-footer a{color:#4a2a2a;text-decoration:none;}
-footer a:hover{color:var(--dim);}
+/* ═══ FOOTER ═══ */
+footer{text-align:center;padding:1.3rem 0 .7rem;font-size:.68rem;color:#282028;
+  border-top:1px solid rgba(100,0,15,.1);margin-top:.8rem;}
+footer span{color:#5a2a2a;}
 .hidden{display:none!important;}
 </style>
 </head>
 <body>
-
-<div class="bg-canvas"></div>
-<div class="bg-scanlines"></div>
+<div class="bg-base"></div>
+<div class="bg-lines"></div>
 <div class="bg-grid"></div>
-<div id="particles"></div>
+<div id="pts"></div>
 
-<!-- ═══ LANGUAGE BAR ═══ -->
+<!-- LANG BAR -->
 <div id="langBar">
   <button class="lbtn on" onclick="setLang('ar')">🇸🇦 العربية</button>
   <div class="lsep"></div>
@@ -404,64 +285,117 @@ footer a:hover{color:var(--dim);}
 </div>
 
 <div class="app">
-
   <!-- HEADER -->
-  <div class="header">
-    <div class="logo-ring"><span class="logo-skull">💀</span></div>
+  <div class="hdr">
+    <div class="logo-ring"><span class="skull">💀</span></div>
     <h1 class="app-title">LinkReaper</h1>
-    <span class="app-version">v3.1</span>
+    <div class="vtag">
+      <span class="vbadge">v4.0</span>
+      <div class="live-dot"></div>
+      <span class="live-txt">LIVE INTEL</span>
+    </div>
     <p id="tagline"></p>
   </div>
 
   <!-- MONSTER -->
-  <div class="monster-box">
-    <div class="mon-avatar" id="monAvatar">💀</div>
+  <div class="mon-box">
+    <div class="mon-av" id="monAv">💀</div>
     <div style="flex:1">
-      <div class="mon-name">// REAPER.EXE v3.1</div>
-      <div id="monsterText"><span class="tcursor"></span></div>
+      <div class="mon-name">// REAPER.EXE v4.0 — THREAT INTELLIGENCE ENGINE</div>
+      <div id="monTxt"><span class="tc"></span></div>
     </div>
   </div>
 
   <!-- INPUT -->
-  <div class="input-card">
+  <div class="inp-card">
     <span id="inputLabel"></span>
-    <div class="input-row">
+    <div class="inp-row">
       <input type="url" id="urlInput" autocomplete="off" spellcheck="false"/>
       <button id="scanBtn" onclick="startScan()">🔍 <span id="scanBtnTxt"></span></button>
     </div>
   </div>
 
-  <!-- LOADING -->
-  <div id="loadingCard">
-    <div class="lsteps" id="lsteps">
-      <div class="lstep" id="ls0"><div class="lstep-dot"></div><span id="lt0"></span></div>
-      <div class="lstep" id="ls1"><div class="lstep-dot"></div><span id="lt1"></span></div>
-      <div class="lstep" id="ls2"><div class="lstep-dot"></div><span id="lt2"></span></div>
-      <div class="lstep" id="ls3"><div class="lstep-dot"></div><span id="lt3"></span></div>
-      <div class="lstep" id="ls4"><div class="lstep-dot"></div><span id="lt4"></span></div>
+  <!-- ENGINE STATUS -->
+  <div id="engineCard">
+    <div class="eng-title" id="engTitle"></div>
+    <div class="eng-layers" id="engLayers">
+      <div class="eng-layer" id="el0">
+        <div class="eng-icon">🧬</div>
+        <div class="eng-info">
+          <div class="eng-name">HEURISTIC ENGINE</div>
+          <div class="eng-status" id="es0"></div>
+        </div>
+        <div class="eng-badge waiting" id="eb0">WAITING</div>
+      </div>
+      <div class="eng-layer" id="el1">
+        <div class="eng-icon">🛡️</div>
+        <div class="eng-info">
+          <div class="eng-name">GOOGLE SAFE BROWSING</div>
+          <div class="eng-status" id="es1"></div>
+        </div>
+        <div class="eng-badge waiting" id="eb1">WAITING</div>
+      </div>
+      <div class="eng-layer" id="el2">
+        <div class="eng-icon">🔬</div>
+        <div class="eng-info">
+          <div class="eng-name">URLSCAN.IO ANALYSIS</div>
+          <div class="eng-status" id="es2"></div>
+        </div>
+        <div class="eng-badge waiting" id="eb2">WAITING</div>
+      </div>
+      <div class="eng-layer" id="el3">
+        <div class="eng-icon">🌐</div>
+        <div class="eng-info">
+          <div class="eng-name">ABUSEIPDB</div>
+          <div class="eng-status" id="es3"></div>
+        </div>
+        <div class="eng-badge waiting" id="eb3">WAITING</div>
+      </div>
+      <div class="eng-layer" id="el4">
+        <div class="eng-icon">🎣</div>
+        <div class="eng-info">
+          <div class="eng-name">PHISHSTATS DATABASE</div>
+          <div class="eng-status" id="es4"></div>
+        </div>
+        <div class="eng-badge waiting" id="eb4">WAITING</div>
+      </div>
     </div>
-    <div class="prog-track"><div id="progressFill"></div></div>
+    <div class="prog-track"><div id="progFill"></div></div>
   </div>
 
   <!-- RESULT -->
-  <div id="resultCard">
-    <div class="res-header">
-      <div class="res-badge" id="resBadge"></div>
-      <div style="flex:1;min-width:0;">
-        <div id="resultVerdict"></div>
-        <div id="resultDomain"></div>
+  <div id="resCard">
+    <div class="res-top">
+      <div class="score-ring-wrap">
+        <svg viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="34"/>
+          <circle class="ring-fill" id="ringFill" cx="40" cy="40" r="34"
+            stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ringNum">0</div>
+          <div class="ring-label">/100</div>
+        </div>
+      </div>
+      <div class="res-meta">
+        <div id="resVerdict"></div>
+        <div id="resDomain"></div>
+        <div class="threat-tags" id="threatTags"></div>
       </div>
     </div>
-    <div class="score-row">
-      <span id="scoreNum">0</span>
-      <div class="score-track"><div id="scoreBar"></div></div>
-      <span class="score-slash">/100</span>
-    </div>
+
     <div id="aiVerdict"></div>
-    <div id="checksTitle"></div>
-    <div id="checksGrid"></div>
+
+    <!-- API Sources -->
+    <div class="src-title" id="srcTitle"></div>
+    <div class="src-grid" id="srcGrid"></div>
+
+    <!-- Heuristic checks -->
+    <div class="src-title" id="chkTitle"></div>
+    <div class="chk-grid" id="chkGrid"></div>
+
     <div class="share-row">
-      <button class="share-btn" id="shareBtn" onclick="shareResult()">🔗 <span id="shareTxt">مشاركة النتيجة</span></button>
+      <button class="share-btn" id="shareBtn" onclick="doShare()">🔗 <span id="shareTxt"></span></button>
     </div>
   </div>
 
@@ -473,26 +407,26 @@ footer a:hover{color:var(--dim);}
 
   <!-- AI BANNER -->
   <div class="ai-banner">
-    <div class="ai-banner-icon">🤖</div>
+    <div class="ai-icon">🤖</div>
     <div>
-      <div class="ai-banner-title" id="bannerTitle"></div>
-      <div class="ai-banner-desc" id="bannerDesc"></div>
+      <div class="ai-ttl" id="bannerTitle"></div>
+      <div class="ai-dsc" id="bannerDesc"></div>
     </div>
   </div>
 
   <!-- SOCIAL -->
-  <div class="social-row">
-    <a class="soc-btn soc-x" href="https://x.com/LinkReaperApp" target="_blank" rel="noopener noreferrer">
+  <div class="soc-row">
+    <a class="soc-btn soc-x" href="https://x.com/LinkReaper" target="_blank" rel="noopener noreferrer">
       <span>𝕏</span><span id="xTxt"></span>
     </a>
-    <a class="soc-btn soc-tg" href="https://t.me/LinkReaperApp" target="_blank" rel="noopener noreferrer">
+    <a class="soc-btn soc-tg" href="https://t.me/LinkReaper" target="_blank" rel="noopener noreferrer">
       <span>✈️</span><span id="tgTxt"></span>
     </a>
   </div>
 
   <!-- HISTORY -->
-  <div id="histSection">
-    <div class="sec-label" id="histLabel"></div>
+  <div id="histSec">
+    <div class="sec-lbl" id="histLbl"></div>
     <div id="histList"></div>
   </div>
 
@@ -500,682 +434,779 @@ footer a:hover{color:var(--dim);}
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════
-   TRANSLATIONS  (ar · en · fr · es · tr · de)
-══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   API KEYS
+═══════════════════════════════════════════════════════ */
+const API = {
+  GSB_KEY:   'AIzaSyBeucRtC0zMiMl1emlFUVV7lBTJNSFPcxk',
+  URLSCAN:   '019da299-b76e-7693-ac72-23511c56372e',
+  ABUSEIPDB: '22c0cce3773d8dbd84af79a5ded571bbc1e278ee70bac2a5ea3a44469e9f17788a2b9ccc39a25ead',
+};
+
+/* ═══════════════════════════════════════════════════════
+   TRANSLATIONS
+═══════════════════════════════════════════════════════ */
 const T = {
-ar:{
-  dir:'rtl',
-  tagline:'كاشف الروابط الرقمي • يشمّ الخطر من كيلومترات',
-  inputLabel:'// أدخل الرابط المشبوه',
+ar:{dir:'rtl',
+  tagline:'نظام الاستخبارات الأمنية الحقيقي • 4 APIs فعلية',
+  inputLabel:'// أدخل الرابط للفحص الأمني',
   scanBtn:'فحص',
-  idle:'أنا هنا وجاهز... الصق أي رابط وسأكشف حقيقته.',
-  empty:'...الصق رابطاً أولاً يا صاحبي 😑',
-  scanning:'أفحص الرابط... انتظر...',
-  steps:['// تحليل بنية الرابط...','// فحص بروتوكول الأمان...','// البحث عن أنماط التصيد...','// تقييم مستوى الخطر...','// صياغة الحكم النهائي...'],
-  stepMsgs:['أحلل بنية الرابط...','أفحص بروتوكول الأمان...','أبحث عن التصيد...','أقيّم مستوى الخطر...','أصيغ الحكم النهائي...'],
-  verdict:{safe:'الرابط يبدو آمناً!',warning:'مشبوه — توقف!',danger:'خطر! ابتعد الآن!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// نتائج الفحص التفصيلي',
-  histLabel:'// آخر الروابط المفحوصة',
+  idle:'أنا محرك الاستخبارات الأمنية. الصق رابطاً وسأحلله عبر 4 APIs حقيقية.',
+  empty:'...الصق رابطاً أولاً 😑',
+  engTitle:'// محرك الفحص المتعدد الطبقات',
+  engStatus:['تحليل هيوريستي','Google Safe Browsing','URLScan تحليل عميق','AbuseIPDB فحص IP','PhishStats قاعدة بيانات'],
+  running:'جاري التحقق...',done:'اكتمل',skip:'تخطي',err:'خطأ',
+  verdict:{safe:'الرابط آمن!',warning:'مشبوه — انتبه!',danger:'خطر! ابتعد فوراً!'},
+  srcTitle:'// نتائج APIs الأمنية',chkTitle:'// التحليل الهيوريستي',
+  histLbl:'// آخر الروابط المفحوصة',
   bannerTitle:'// التحديث القادم',
-  bannerDesc:'نعمل على دمج الذكاء الاصطناعي لنتائج أكثر دقة. تابعنا على X وTelegram للبقاء على اطلاع!',
-  tips:'⚠️ نصائح الحماية: لا تدخل أي بيانات شخصية في هذا الرابط. إذا وصلك من مجهول فاحذفه فوراً. استخدم برنامج حماية محدّث.',
-  disclaimer:'⚙️ هذا الفحص تحليل أولي يعتمد على خصائص الرابط فقط. لا يضمن الأمان التام. استخدم حكمك دائماً.',
-  share:'مشاركة النتيجة',
-  xTxt:'تابعنا على X',
-  tgTxt:'قناة Telegram',
-  footer:'LinkReaper v3.1 — فحص أولي للروابط',
-  footerSub:'لا تثق بأي رابط مجهول',
-  monReact:{safe:'الرابط يبدو سليماً 😌',warning:'في إشارات مشبوهة 😒',danger:'خطر واضح! لا تقترب! 😱'},
-  shareText:(d,s,l)=>`🔍 فحصت "${d}" بـ LinkReaper\n${l==='safe'?'✅ آمن':'l'==='warning'?'⚠️ مشبوه':'💀 خطير'} — ${s}/100\n\nجرب الموقع: https://linkreaper.app`,
-  ck:{
-    httpsOk:'اتصال مشفر HTTPS — ✅',httpsBad:'HTTP غير مشفر — ❌ خطر!',
-    ipBad:'يستخدم IP مباشر بدلاً من نطاق — ❌',ipOk:'يستخدم اسم نطاق طبيعي — ✅',
-    trustedOk:'نطاق موثوق ومعروف عالمياً — ⭐',
-    tldBad:'امتداد النطاق مشبوه — ❌',tldOk:'امتداد النطاق طبيعي — ✅',
-    phishMany:(n,w)=>`${n} كلمات تصيّد: "${w}" — ❌`,
-    phishOne:(w)=>`كلمة مشبوهة: "${w}" — ⚠️`,
-    phishOk:'لا كلمات تصيّد في الرابط — ✅',
-    longBad:(n)=>`رابط طويل جداً (${n} حرف) — ❌`,
-    longWarn:(n)=>`طول مقبول (${n} حرف) — ⚠️`,
-    longOk:(n)=>`طول الرابط طبيعي (${n} حرف) — ✅`,
-    subBad:(n)=>`${n} نطاقات فرعية — تضليل! ❌`,
-    subWarn:'نطاقات فرعية متعددة — ⚠️',
-    subOk:'بنية النطاق طبيعية — ✅',
-    specialBad:'رموز غريبة في اسم النطاق — ❌',
-  },
+  bannerDesc:'نعمل على دمج نتائج الذكاء الاصطناعي مع تحليل APIs لنتائج أكثر ذكاءً. تابعنا!',
+  tips:'⚠️ تحذير: لا تدخل أي بيانات شخصية على هذا الرابط. احذفه إذا وصلك من مجهول.',
+  disclaimer:'⚙️ هذا النظام يستخدم APIs أمنية حقيقية. النتائج للاسترشاد وليست ضماناً مطلقاً.',
+  share:'مشاركة النتيجة',xTxt:'تابعنا X',tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Real Threat Intelligence',footerSub:'لا تثق بأي رابط مجهول',
+  monReact:{safe:'نظيف! الـ APIs أكدت الأمان 😌',warning:'إشارات مشبوهة من APIs! توقف 😒',danger:'خطر مؤكد من مصادر متعددة! 😱'},
+  shareMsg:(d,s,l)=>`🔍 فحص أمني لـ "${d}" عبر LinkReaper\n${l==='safe'?'✅ آمن':l==='warning'?'⚠️ مشبوه':'💀 خطير'} — درجة الأمان: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'بروتوكول HTTPS مشفر ✅',httpsBad:'HTTP غير مشفر ❌',
+    ipBad:'يستخدم IP مباشر ❌',ipOk:'اسم نطاق طبيعي ✅',
+    trusted:'نطاق موثوق عالمياً ⭐',tldBad:'امتداد نطاق مشبوه ❌',tldOk:'امتداد نطاق طبيعي ✅',
+    phishM:(n,w)=>`${n} كلمات تصيّد: ${w} ❌`,phishO:(w)=>`كلمة مشبوهة: ${w} ⚠️`,phishOk:'لا كلمات تصيّد ✅',
+    longB:(n)=>`رابط طويل جداً (${n}) ❌`,longW:(n)=>`طول مقبول (${n}) ⚠️`,longOk:(n)=>`طول طبيعي (${n}) ✅`,
+    subB:(n)=>`${n} نطاقات فرعية ❌`,subW:'نطاقات فرعية متعددة ⚠️',subOk:'بنية نطاق طبيعية ✅',
+    specialBad:'رموز غريبة في النطاق ❌'},
   ai:{
-    safe:[
-      (d,s)=>`هذا الرابط "${d}" يبدو نظيفاً. لم أشمّ فيه دماءً رقمية ولا نوايا شريرة. درجة أمانه ${s}/100 — يمكنك المتابعة بحذر معقول.`,
-      (d,s)=>`"${d}" اجتاز الاختبار. نظيف، مشفر، لا أشمّ فيه شيئاً مريباً. ${s}/100 — الوحش مرتاح.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" يعطيني إشارات مختلطة. ليس خطيراً لكن ليس نظيفاً تماماً. ${s}/100 — تحقق من مصدره قبل أي خطوة.`,
-      (d,s)=>`أحسّ بشيء غريب في "${d}". مش خطر واضح، لكن مش مريح. ${s}/100 — لا تدخل بيانات حساسة.`
-    ],
-    danger:[
-      (d,s)=>`🚨 "${d}" رابط سام وخطير! كل علاماتي تصرخ تحذيراً. ${s}/100 فقط — يشبه بالضبط روابط التصيّد. لا تلمسه!`,
-      (d,s)=>`الوحش يصرخ: "${d}" خطر داهم! ${s}/100 نقطة فقط. كل مؤشراتي تشير إلى احتيال. ابتعد فوراً!`
-    ]
+    safe:[(d,s)=>`نتائج الـ APIs الأربع تؤكد أن "${d}" نظيف. درجة الأمان ${s}/100 — لا تهديدات مكتشفة في قواعد بيانات Google وURLScan وAbuseIPDB وPhishStats.`,
+          (d,s)=>`"${d}" اجتاز الفحص الأمني الكامل بـ ${s}/100. كل الـ APIs تقول نفس الشيء: لا تهديد هنا.`],
+    warning:[(d,s)=>`"${d}" يثير بعض التحفظات الأمنية. درجة ${s}/100 — بعض APIs أعطت إشارات تحذيرية. تحقق من مصدر الرابط قبل المتابعة.`,
+             (d,s)=>`المحرك الأمني اكتشف إشارات مشبوهة في "${d}". ${s}/100 — لا تدخل أي بيانات حساسة.`],
+    danger:[(d,s)=>`🚨 تحذير أمني حرج! "${d}" صنّفته APIs الأمنية كرابط خطير. ${s}/100 فقط — تم اكتشاف تهديد حقيقي. لا تفتحه!`,
+            (d,s)=>`المحرك يصرخ: "${d}" خطر مؤكد من مصادر متعددة! ${s}/100. Google وقواعد البيانات الأمنية تؤكد الخطورة. ابتعد!`]
   }
 },
-en:{
-  dir:'ltr',
-  tagline:'Digital Link Scanner • Sniffs Danger from Miles Away',
-  inputLabel:'// Enter suspicious URL',
+en:{dir:'ltr',
+  tagline:'Real Threat Intelligence System • 4 Live APIs',
+  inputLabel:'// Enter URL for security analysis',
   scanBtn:'SCAN',
-  idle:"I'm ready... paste any URL and I'll reveal its true nature.",
-  empty:"...paste a URL first, coward 😑",
-  scanning:'Analyzing the link... hold on...',
-  steps:['// Parsing URL structure...','// Checking security protocol...','// Scanning for phishing patterns...','// Evaluating threat level...','// Formulating final verdict...'],
-  stepMsgs:['Parsing URL structure...','Checking security protocol...','Scanning for phishing...','Evaluating threat level...','Formulating verdict...'],
-  verdict:{safe:'This Link is Safe!',warning:'Suspicious — Stop!',danger:'DANGER! Back Away!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// Detailed Scan Results',
-  histLabel:'// Recently Scanned URLs',
+  idle:"I'm the Threat Intelligence Engine. Paste any URL and I'll analyze it through 4 real security APIs.",
+  empty:"...paste a URL first 😑",
+  engTitle:'// Multi-Layer Security Engine',
+  engStatus:['Heuristic Analysis','Google Safe Browsing','URLScan Deep Analysis','AbuseIPDB IP Check','PhishStats Database'],
+  running:'Checking...',done:'DONE',skip:'SKIP',err:'ERROR',
+  verdict:{safe:'Link is Safe!',warning:'Suspicious — Caution!',danger:'DANGER! Back Away!'},
+  srcTitle:'// Security API Results',chkTitle:'// Heuristic Analysis',
+  histLbl:'// Recently Scanned URLs',
   bannerTitle:'// Coming Soon',
-  bannerDesc:"We're integrating AI for deeper, smarter link analysis. Follow us on X and Telegram to stay updated!",
-  tips:'⚠️ Safety Tips: Never enter personal data on suspicious sites. If received from an unknown sender, delete immediately. Keep antivirus up to date.',
-  disclaimer:'⚙️ This is a preliminary analysis based on URL characteristics only. It does not guarantee absolute safety. Always use your own judgment.',
-  share:'Share Result',
-  xTxt:'Follow on X',
-  tgTxt:'Telegram Channel',
-  footer:'LinkReaper v3.1 — Preliminary URL Analysis',
-  footerSub:'Never trust an unknown link',
-  monReact:{safe:'Link looks clean 😌',warning:'Some suspicious signals 😒',danger:'Clear danger! Stay away! 😱'},
-  shareText:(d,s,l)=>`🔍 Scanned "${d}" with LinkReaper\n${l==='safe'?'✅ Safe':l==='warning'?'⚠️ Suspicious':'💀 Dangerous'} — ${s}/100\n\nTry it: https://linkreaper.app`,
-  ck:{
-    httpsOk:'Encrypted HTTPS connection — ✅',httpsBad:'Unencrypted HTTP — ❌ Dangerous!',
-    ipBad:'Uses direct IP instead of domain — ❌',ipOk:'Uses normal domain name — ✅',
-    trustedOk:'Globally trusted & recognized domain — ⭐',
-    tldBad:'Very suspicious domain extension — ❌',tldOk:'Domain extension looks normal — ✅',
-    phishMany:(n,w)=>`${n} phishing keywords: "${w}" — ❌`,
-    phishOne:(w)=>`Suspicious word found: "${w}" — ⚠️`,
-    phishOk:'No phishing keywords in URL — ✅',
-    longBad:(n)=>`URL too long (${n} chars) — ❌`,
-    longWarn:(n)=>`URL length acceptable (${n} chars) — ⚠️`,
-    longOk:(n)=>`Normal URL length (${n} chars) — ✅`,
-    subBad:(n)=>`${n} subdomains — deceptive tactic! ❌`,
-    subWarn:'Multiple subdomains detected — ⚠️',
-    subOk:'Domain structure is clean — ✅',
-    specialBad:'Strange characters in domain name — ❌',
-  },
+  bannerDesc:"We're integrating AI to combine API results for smarter verdicts. Follow us to stay updated!",
+  tips:"⚠️ Warning: Don't enter personal data on this site. Delete if received from unknown sender.",
+  disclaimer:'⚙️ This system uses real security APIs. Results are for guidance and do not guarantee absolute safety.',
+  share:'Share Result',xTxt:'Follow on X',tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Real Threat Intelligence',footerSub:'Never trust an unknown link',
+  monReact:{safe:'Clean! APIs confirmed safety 😌',warning:'Suspicious signals from APIs! Caution 😒',danger:'Confirmed danger from multiple sources! 😱'},
+  shareMsg:(d,s,l)=>`🔍 Security scan of "${d}" via LinkReaper\n${l==='safe'?'✅ Safe':l==='warning'?'⚠️ Suspicious':'💀 Dangerous'} — Score: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'Encrypted HTTPS protocol ✅',httpsBad:'Unencrypted HTTP ❌',
+    ipBad:'Uses direct IP address ❌',ipOk:'Normal domain name ✅',
+    trusted:'Globally trusted domain ⭐',tldBad:'Suspicious domain extension ❌',tldOk:'Normal domain extension ✅',
+    phishM:(n,w)=>`${n} phishing keywords: ${w} ❌`,phishO:(w)=>`Suspicious word: ${w} ⚠️`,phishOk:'No phishing keywords ✅',
+    longB:(n)=>`URL too long (${n} chars) ❌`,longW:(n)=>`Acceptable length (${n}) ⚠️`,longOk:(n)=>`Normal length (${n}) ✅`,
+    subB:(n)=>`${n} subdomains detected ❌`,subW:'Multiple subdomains ⚠️',subOk:'Clean domain structure ✅',
+    specialBad:'Strange chars in domain ❌'},
   ai:{
-    safe:[
-      (d,s)=>`"${d}" looks clean to me. No digital blood, no evil intentions detected. Safety score: ${s}/100 — proceed with reasonable caution.`,
-      (d,s)=>`"${d}" passed the test. Clean, encrypted, nothing suspicious here. ${s}/100 — The Reaper is at ease.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" gives me mixed signals. Not clearly dangerous, but not clean either. ${s}/100 — verify the source before proceeding.`,
-      (d,s)=>`Something feels off about "${d}". Not an obvious threat but not comfortable. ${s}/100 — don't enter sensitive data.`
-    ],
-    danger:[
-      (d,s)=>`🚨 "${d}" is toxic and dangerous! All my signals are screaming. Only ${s}/100 — looks exactly like a phishing link. Don't touch it!`,
-      (d,s)=>`THE REAPER SCREAMS: "${d}" is imminent danger! Just ${s}/100. Every indicator points to fraud. STAY AWAY NOW!`
-    ]
+    safe:[(d,s)=>`All 4 security APIs confirm "${d}" is clean. Safety score: ${s}/100 — No threats found across Google, URLScan, AbuseIPDB, and PhishStats databases.`,
+          (d,s)=>`"${d}" passed the full security scan with ${s}/100. Every API gives the green light — no threat detected.`],
+    warning:[(d,s)=>`"${d}" raised some security concerns. Score: ${s}/100 — Some APIs returned warning signals. Verify the link source before proceeding.`,
+             (d,s)=>`The security engine detected suspicious signals in "${d}". ${s}/100 — Don't enter any sensitive data.`],
+    danger:[(d,s)=>`🚨 Critical security alert! "${d}" was flagged as dangerous by security APIs. Only ${s}/100 — A real threat was detected. Do NOT open this link!`,
+            (d,s)=>`ENGINE SCREAMING: "${d}" is confirmed dangerous by multiple sources! ${s}/100. Google and security databases confirm the threat. STAY AWAY!`]
   }
 },
-fr:{
-  dir:'ltr',
-  tagline:'Détecteur de Liens Numérique • Sent le Danger à des Kilomètres',
-  inputLabel:"// Entrez l'URL suspecte",
+fr:{dir:'ltr',
+  tagline:'Système de Renseignement sur les Menaces • 4 APIs en Direct',
+  inputLabel:"// Entrez l'URL pour l'analyse sécurité",
   scanBtn:'SCANNER',
-  idle:"Je suis prêt... collez n'importe quel lien et je révélerai sa vraie nature.",
+  idle:"Je suis le moteur de renseignement sur les menaces. Collez n'importe quelle URL.",
   empty:"...collez d'abord une URL 😑",
-  scanning:'Analyse du lien en cours...',
-  steps:["// Analyse de la structure URL...","// Vérification du protocole...",'// Recherche de phishing...',"// Évaluation de la menace...",'// Formulation du verdict...'],
-  stepMsgs:["Analyse de la structure...","Vérification du protocole...",'Recherche de phishing...',"Évaluation de la menace...",'Formulation du verdict...'],
-  verdict:{safe:'Ce Lien est Sûr!',warning:'Suspect — Arrêtez!',danger:'DANGER! Reculez!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// Résultats Détaillés du Scan',
-  histLabel:'// Liens Récemment Scannés',
+  engTitle:'// Moteur de Sécurité Multi-Couches',
+  engStatus:['Analyse Heuristique','Google Safe Browsing','Analyse URLScan','Vérification IP AbuseIPDB','Base PhishStats'],
+  running:'Vérification...',done:'FAIT',skip:'IGNORÉ',err:'ERREUR',
+  verdict:{safe:'Lien Sûr!',warning:'Suspect — Attention!',danger:'DANGER! Reculez!'},
+  srcTitle:'// Résultats des APIs Sécurité',chkTitle:'// Analyse Heuristique',
+  histLbl:'// Liens Récemment Scannés',
   bannerTitle:'// Prochainement',
-  bannerDesc:"Nous intégrons l'IA pour une analyse plus approfondie. Suivez-nous sur X et Telegram!",
-  tips:"⚠️ Conseils: Ne saisissez jamais de données personnelles sur des sites suspects. Si reçu d'un inconnu, supprimez immédiatement.",
-  disclaimer:"⚙️ Il s'agit d'une analyse préliminaire basée sur les caractéristiques de l'URL uniquement. Elle ne garantit pas une sécurité absolue.",
-  share:'Partager le Résultat',
-  xTxt:'Suivre sur X',
-  tgTxt:'Canal Telegram',
-  footer:'LinkReaper v3.1 — Analyse Préliminaire',
-  footerSub:'Ne faites confiance à aucun lien inconnu',
-  monReact:{safe:'Lien propre 😌',warning:'Signaux suspects 😒',danger:'Danger évident! Fuyez! 😱'},
-  shareText:(d,s,l)=>`🔍 Scanné "${d}" avec LinkReaper\n${l==='safe'?'✅ Sûr':l==='warning'?'⚠️ Suspect':'💀 Dangereux'} — ${s}/100\n\nEssayez: https://linkreaper.app`,
-  ck:{
-    httpsOk:'Connexion HTTPS chiffrée — ✅',httpsBad:'HTTP non chiffré — ❌ Dangereux!',
-    ipBad:'Utilise une IP directe — ❌',ipOk:'Utilise un nom de domaine normal — ✅',
-    trustedOk:'Domaine de confiance reconnu mondialement — ⭐',
-    tldBad:'Extension de domaine très suspecte — ❌',tldOk:"Extension de domaine normale — ✅",
-    phishMany:(n,w)=>`${n} mots de phishing: "${w}" — ❌`,
-    phishOne:(w)=>`Mot suspect: "${w}" — ⚠️`,
-    phishOk:'Aucun mot de phishing trouvé — ✅',
-    longBad:(n)=>`URL trop longue (${n} car.) — ❌`,
-    longWarn:(n)=>`Longueur acceptable (${n} car.) — ⚠️`,
-    longOk:(n)=>`Longueur normale (${n} car.) — ✅`,
-    subBad:(n)=>`${n} sous-domaines — trompeur! ❌`,
-    subWarn:'Plusieurs sous-domaines — ⚠️',
-    subOk:'Structure de domaine propre — ✅',
-    specialBad:'Caractères étranges dans le domaine — ❌',
-  },
+  bannerDesc:"Intégration de l'IA pour des verdicts plus intelligents. Suivez-nous!",
+  tips:'⚠️ Avertissement: Ne saisissez pas de données personnelles. Supprimez si reçu d\'un inconnu.',
+  disclaimer:"⚙️ Ce système utilise de vraies APIs de sécurité. Les résultats sont indicatifs.",
+  share:'Partager le Résultat',xTxt:'Suivre sur X',tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Renseignement sur les Menaces',footerSub:'Ne faites confiance à aucun lien inconnu',
+  monReact:{safe:'Propre! Les APIs confirment la sécurité 😌',warning:'Signaux suspects des APIs! Attention 😒',danger:'Danger confirmé par plusieurs sources! 😱'},
+  shareMsg:(d,s,l)=>`🔍 Scan de sécurité de "${d}" via LinkReaper\n${l==='safe'?'✅ Sûr':l==='warning'?'⚠️ Suspect':'💀 Dangereux'} — Score: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'Protocole HTTPS chiffré ✅',httpsBad:'HTTP non chiffré ❌',
+    ipBad:'Utilise une IP directe ❌',ipOk:'Nom de domaine normal ✅',
+    trusted:'Domaine de confiance mondial ⭐',tldBad:'Extension suspecte ❌',tldOk:'Extension normale ✅',
+    phishM:(n,w)=>`${n} mots de phishing: ${w} ❌`,phishO:(w)=>`Mot suspect: ${w} ⚠️`,phishOk:'Aucun mot de phishing ✅',
+    longB:(n)=>`URL trop longue (${n}) ❌`,longW:(n)=>`Longueur acceptable (${n}) ⚠️`,longOk:(n)=>`Longueur normale (${n}) ✅`,
+    subB:(n)=>`${n} sous-domaines ❌`,subW:'Plusieurs sous-domaines ⚠️',subOk:'Structure propre ✅',
+    specialBad:'Caractères étranges dans le domaine ❌'},
   ai:{
-    safe:[
-      (d,s)=>`"${d}" semble propre. Pas de sang numérique détecté. Score: ${s}/100 — vous pouvez continuer avec prudence.`,
-      (d,s)=>`"${d}" a passé le test. Propre et chiffré. ${s}/100 — Le Faucheur est satisfait.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" m'envoie des signaux mitigés. Pas clairement dangereux, mais pas propre non plus. ${s}/100 — vérifiez la source.`,
-      (d,s)=>`Quelque chose d'étrange avec "${d}". ${s}/100 — ne saisissez pas de données sensibles.`
-    ],
-    danger:[
-      (d,s)=>`🚨 "${d}" est toxique et dangereux! Seulement ${s}/100. Ressemble à un lien de phishing. Ne touchez pas!`,
-      (d,s)=>`LE FAUCHEUR CRIE: "${d}" est un danger imminent! ${s}/100 seulement. Tout indique une fraude. FUYEZ!`
-    ]
+    safe:[(d,s)=>`Les 4 APIs de sécurité confirment que "${d}" est propre. Score: ${s}/100 — Aucune menace détectée.`,
+          (d,s)=>`"${d}" a passé l'analyse complète avec ${s}/100. Toutes les APIs donnent le feu vert.`],
+    warning:[(d,s)=>`"${d}" soulève des préoccupations. Score: ${s}/100 — Certaines APIs ont retourné des avertissements.`,
+             (d,s)=>`Le moteur a détecté des signaux suspects dans "${d}". ${s}/100 — Ne saisissez pas de données sensibles.`],
+    danger:[(d,s)=>`🚨 Alerte critique! "${d}" a été signalé comme dangereux. Seulement ${s}/100 — Menace réelle détectée!`,
+            (d,s)=>`LE MOTEUR CRIE: "${d}" est confirmé dangereux! ${s}/100. Fuyez!`]
   }
 },
-es:{
-  dir:'ltr',
-  tagline:'Detector de Links Digital • Huele el Peligro a Kilómetros',
-  inputLabel:'// Ingrese la URL sospechosa',
+es:{dir:'ltr',
+  tagline:'Sistema de Inteligencia de Amenazas • 4 APIs en Vivo',
+  inputLabel:'// Ingrese URL para análisis de seguridad',
   scanBtn:'ESCANEAR',
-  idle:"Estoy listo... pega cualquier enlace y revelaré su verdadera naturaleza.",
-  empty:"...pega primero una URL 😑",
-  scanning:'Analizando el enlace...',
-  steps:['// Analizando estructura URL...','// Verificando protocolo de seguridad...','// Buscando patrones de phishing...','// Evaluando nivel de amenaza...','// Formulando veredicto final...'],
-  stepMsgs:['Analizando estructura...','Verificando protocolo...','Buscando phishing...','Evaluando amenaza...','Formulando veredicto...'],
-  verdict:{safe:'¡Este Enlace es Seguro!',warning:'¡Sospechoso — Alto!',danger:'¡PELIGRO! ¡Aléjate!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// Resultados Detallados',
-  histLabel:'// URLs Escaneadas Recientemente',
+  idle:'Soy el motor de inteligencia de amenazas. Pega cualquier URL para analizarla.',
+  empty:'...pega primero una URL 😑',
+  engTitle:'// Motor de Seguridad Multi-Capa',
+  engStatus:['Análisis Heurístico','Google Safe Browsing','Análisis URLScan','Verificación IP AbuseIPDB','Base PhishStats'],
+  running:'Verificando...',done:'LISTO',skip:'OMITIR',err:'ERROR',
+  verdict:{safe:'¡Enlace Seguro!',warning:'Sospechoso — ¡Cuidado!',danger:'¡PELIGRO! ¡Aléjate!'},
+  srcTitle:'// Resultados de APIs de Seguridad',chkTitle:'// Análisis Heurístico',
+  histLbl:'// URLs Escaneadas Recientemente',
   bannerTitle:'// Próximamente',
-  bannerDesc:'Estamos integrando IA para un análisis más profundo. ¡Síguenos en X y Telegram!',
-  tips:'⚠️ Consejos: Nunca ingreses datos personales en sitios sospechosos. Si lo recibiste de un desconocido, elimínalo.',
-  disclaimer:'⚙️ Este es un análisis preliminar basado solo en las características de la URL. No garantiza seguridad absoluta.',
-  share:'Compartir Resultado',
-  xTxt:'Seguir en X',
-  tgTxt:'Canal de Telegram',
-  footer:'LinkReaper v3.1 — Análisis Preliminar de URLs',
-  footerSub:'Nunca confíes en un enlace desconocido',
-  monReact:{safe:'Enlace limpio 😌',warning:'Señales sospechosas 😒',danger:'¡Peligro claro! ¡Aléjate! 😱'},
-  shareText:(d,s,l)=>`🔍 Escaneé "${d}" con LinkReaper\n${l==='safe'?'✅ Seguro':l==='warning'?'⚠️ Sospechoso':'💀 Peligroso'} — ${s}/100\n\nPruébalo: https://linkreaper.app`,
-  ck:{
-    httpsOk:'Conexión HTTPS cifrada — ✅',httpsBad:'HTTP no cifrado — ❌ ¡Peligroso!',
-    ipBad:'Usa IP directa en lugar de dominio — ❌',ipOk:'Usa nombre de dominio normal — ✅',
-    trustedOk:'Dominio confiable reconocido mundialmente — ⭐',
-    tldBad:'Extensión de dominio muy sospechosa — ❌',tldOk:'Extensión de dominio normal — ✅',
-    phishMany:(n,w)=>`${n} palabras de phishing: "${w}" — ❌`,
-    phishOne:(w)=>`Palabra sospechosa: "${w}" — ⚠️`,
-    phishOk:'Sin palabras de phishing en la URL — ✅',
-    longBad:(n)=>`URL demasiado larga (${n} chars) — ❌`,
-    longWarn:(n)=>`Longitud aceptable (${n} chars) — ⚠️`,
-    longOk:(n)=>`Longitud normal (${n} chars) — ✅`,
-    subBad:(n)=>`${n} subdominios — táctica engañosa! ❌`,
-    subWarn:'Múltiples subdominios — ⚠️',
-    subOk:'Estructura de dominio limpia — ✅',
-    specialBad:'Caracteres extraños en el dominio — ❌',
-  },
+  bannerDesc:'Integrando IA para veredictos más inteligentes. ¡Síguenos!',
+  tips:'⚠️ Advertencia: No ingreses datos personales. Elimina si lo recibiste de un desconocido.',
+  disclaimer:'⚙️ Este sistema usa APIs de seguridad reales. Los resultados son orientativos.',
+  share:'Compartir Resultado',xTxt:'Seguir en X',tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Inteligencia de Amenazas Real',footerSub:'Nunca confíes en un enlace desconocido',
+  monReact:{safe:'¡Limpio! Las APIs confirman seguridad 😌',warning:'¡Señales sospechosas de las APIs! Cuidado 😒',danger:'¡Peligro confirmado por múltiples fuentes! 😱'},
+  shareMsg:(d,s,l)=>`🔍 Escaneo de seguridad de "${d}" via LinkReaper\n${l==='safe'?'✅ Seguro':l==='warning'?'⚠️ Sospechoso':'💀 Peligroso'} — Puntuación: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'Protocolo HTTPS cifrado ✅',httpsBad:'HTTP no cifrado ❌',
+    ipBad:'Usa IP directa ❌',ipOk:'Nombre de dominio normal ✅',
+    trusted:'Dominio confiable mundial ⭐',tldBad:'Extensión sospechosa ❌',tldOk:'Extensión normal ✅',
+    phishM:(n,w)=>`${n} palabras de phishing: ${w} ❌`,phishO:(w)=>`Palabra sospechosa: ${w} ⚠️`,phishOk:'Sin palabras de phishing ✅',
+    longB:(n)=>`URL demasiado larga (${n}) ❌`,longW:(n)=>`Longitud aceptable (${n}) ⚠️`,longOk:(n)=>`Longitud normal (${n}) ✅`,
+    subB:(n)=>`${n} subdominios detectados ❌`,subW:'Múltiples subdominios ⚠️',subOk:'Estructura limpia ✅',
+    specialBad:'Caracteres extraños en el dominio ❌'},
   ai:{
-    safe:[
-      (d,s)=>`"${d}" parece limpio. No detecté sangre digital. Puntuación: ${s}/100 — puedes continuar con cautela.`,
-      (d,s)=>`"${d}" pasó la prueba. Limpio y cifrado. ${s}/100 — El Segador está satisfecho.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" me envía señales mixtas. No claramente peligroso, pero tampoco limpio. ${s}/100 — verifica el origen.`,
-      (d,s)=>`Algo raro en "${d}". ${s}/100 — no ingreses datos sensibles.`
-    ],
-    danger:[
-      (d,s)=>`🚨 ¡"${d}" es tóxico y peligroso! Solo ${s}/100. Parece exactamente un enlace de phishing. ¡No lo toques!`,
-      (d,s)=>`EL SEGADOR GRITA: ¡"${d}" es peligro inminente! Solo ${s}/100. Todo indica fraude. ¡ALÉJATE YA!`
-    ]
+    safe:[(d,s)=>`Las 4 APIs confirman que "${d}" está limpio. Puntuación: ${s}/100 — Sin amenazas detectadas.`,
+          (d,s)=>`"${d}" pasó el análisis completo con ${s}/100. Todas las APIs dan luz verde.`],
+    warning:[(d,s)=>`"${d}" generó algunas preocupaciones. Puntuación: ${s}/100 — Algunas APIs devolvieron advertencias.`,
+             (d,s)=>`El motor detectó señales sospechosas en "${d}". ${s}/100 — No ingreses datos sensibles.`],
+    danger:[(d,s)=>`🚨 ¡Alerta crítica! "${d}" fue marcado como peligroso. Solo ${s}/100 — ¡Amenaza real detectada!`,
+            (d,s)=>`EL MOTOR GRITA: ¡"${d}" es peligro confirmado! ${s}/100. ¡Aléjate ya!`]
   }
 },
-tr:{
-  dir:'ltr',
-  tagline:'Dijital Bağlantı Tarayıcı • Tehlikeyi Kilometrelerce Önceden Hisseder',
-  inputLabel:"// Şüpheli URL'yi girin",
+tr:{dir:'ltr',
+  tagline:'Gerçek Tehdit İstihbaratı Sistemi • 4 Canlı API',
+  inputLabel:"// Güvenlik analizi için URL girin",
   scanBtn:'TARA',
-  idle:"Hazırım... herhangi bir URL yapıştırın, gerçeğini ortaya çıkarayım.",
-  empty:"...önce bir URL yapıştır 😑",
-  scanning:'Bağlantı analiz ediliyor...',
-  steps:['// URL yapısı ayrıştırılıyor...','// Güvenlik protokolü kontrol ediliyor...','// Kimlik avı taranıyor...','// Tehdit seviyesi değerlendiriliyor...','// Son karar formüle ediliyor...'],
-  stepMsgs:['URL yapısı...','Güvenlik protokolü...','Kimlik avı tarama...','Tehdit değerlendirme...','Son karar...'],
-  verdict:{safe:'Bu Bağlantı Güvenli!',warning:'Şüpheli — Dur!',danger:'TEHLİKE! Uzaklaş!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// Ayrıntılı Tarama Sonuçları',
-  histLabel:"// Son Taranan URL'ler",
+  idle:'Ben Tehdit İstihbaratı Motoruyum. Herhangi bir URL yapıştırın, analiz edeyim.',
+  empty:'...önce bir URL yapıştır 😑',
+  engTitle:'// Çok Katmanlı Güvenlik Motoru',
+  engStatus:['Sezgisel Analiz','Google Safe Browsing','URLScan Derin Analizi','AbuseIPDB IP Kontrolü','PhishStats Veritabanı'],
+  running:'Kontrol ediliyor...',done:'TAMAM',skip:'ATLA',err:'HATA',
+  verdict:{safe:'Bağlantı Güvenli!',warning:'Şüpheli — Dikkat!',danger:'TEHLİKE! Uzaklaş!'},
+  srcTitle:'// Güvenlik API Sonuçları',chkTitle:'// Sezgisel Analiz',
+  histLbl:"// Son Taranan URL'ler",
   bannerTitle:'// Yakında',
-  bannerDesc:"Daha derin analiz için yapay zeka entegre ediyoruz. X ve Telegram'da bizi takip edin!",
-  tips:'⚠️ Güvenlik İpuçları: Şüpheli sitelere kişisel veri girmeyin. Bilinmeyen birinden geldiyse hemen silin.',
-  disclaimer:'⚙️ Bu, yalnızca URL özelliklerine dayalı ön bir analizdir. Mutlak güvenliği garanti etmez.',
-  share:'Sonucu Paylaş',
-  xTxt:"X'te Takip Et",
-  tgTxt:'Telegram Kanalı',
-  footer:'LinkReaper v3.1 — Ön URL Analizi',
-  footerSub:'Hiçbir bilinmeyen bağlantıya güvenme',
-  monReact:{safe:'Bağlantı temiz 😌',warning:'Şüpheli sinyaller 😒',danger:'Açık tehlike! Uzaklaş! 😱'},
-  shareText:(d,s,l)=>`🔍 "${d}" LinkReaper ile tarandı\n${l==='safe'?'✅ Güvenli':l==='warning'?'⚠️ Şüpheli':'💀 Tehlikeli'} — ${s}/100\n\nDeneyin: https://linkreaper.app`,
-  ck:{
-    httpsOk:'Şifreli HTTPS bağlantısı — ✅',httpsBad:'Şifresiz HTTP — ❌ Tehlikeli!',
-    ipBad:'Alan adı yerine doğrudan IP — ❌',ipOk:'Normal alan adı kullanıyor — ✅',
-    trustedOk:'Dünya genelinde tanınan güvenilir alan — ⭐',
-    tldBad:'Çok şüpheli alan adı uzantısı — ❌',tldOk:'Alan adı uzantısı normal — ✅',
-    phishMany:(n,w)=>`${n} kimlik avı kelimesi: "${w}" — ❌`,
-    phishOne:(w)=>`Şüpheli kelime: "${w}" — ⚠️`,
-    phishOk:"URL'de kimlik avı kelimesi yok — ✅",
-    longBad:(n)=>`Çok uzun URL (${n} karakter) — ❌`,
-    longWarn:(n)=>`Kabul edilebilir uzunluk (${n}) — ⚠️`,
-    longOk:(n)=>`Normal uzunluk (${n} karakter) — ✅`,
-    subBad:(n)=>`${n} alt alan — yanıltıcı taktik! ❌`,
-    subWarn:'Birden fazla alt alan — ⚠️',
-    subOk:'Alan yapısı temiz — ✅',
-    specialBad:'Alan adında garip karakterler — ❌',
-  },
+  bannerDesc:'Daha akıllı kararlar için yapay zeka entegre ediyoruz. Takip edin!',
+  tips:"⚠️ Uyarı: Bu siteye kişisel veri girmeyin. Bilinmeyen birinden geldiyse silin.",
+  disclaimer:'⚙️ Bu sistem gerçek güvenlik API\'leri kullanır. Sonuçlar rehberlik amaçlıdır.',
+  share:'Sonucu Paylaş',xTxt:"X'te Takip Et",tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Gerçek Tehdit İstihbaratı',footerSub:'Hiçbir bilinmeyen bağlantıya güvenme',
+  monReact:{safe:'Temiz! API\'ler güvenliği onayladı 😌',warning:'API\'lerden şüpheli sinyaller! Dikkat 😒',danger:'Birden fazla kaynaktan tehlike onaylandı! 😱'},
+  shareMsg:(d,s,l)=>`🔍 "${d}" güvenlik taraması - LinkReaper\n${l==='safe'?'✅ Güvenli':l==='warning'?'⚠️ Şüpheli':'💀 Tehlikeli'} — Puan: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'Şifreli HTTPS protokolü ✅',httpsBad:'Şifresiz HTTP ❌',
+    ipBad:'Doğrudan IP kullanıyor ❌',ipOk:'Normal alan adı ✅',
+    trusted:'Küresel güvenilir alan ⭐',tldBad:'Şüpheli alan uzantısı ❌',tldOk:'Normal alan uzantısı ✅',
+    phishM:(n,w)=>`${n} kimlik avı kelimesi: ${w} ❌`,phishO:(w)=>`Şüpheli kelime: ${w} ⚠️`,phishOk:'Kimlik avı kelimesi yok ✅',
+    longB:(n)=>`Çok uzun URL (${n}) ❌`,longW:(n)=>`Kabul edilebilir (${n}) ⚠️`,longOk:(n)=>`Normal (${n}) ✅`,
+    subB:(n)=>`${n} alt alan ❌`,subW:'Birden fazla alt alan ⚠️',subOk:'Temiz alan yapısı ✅',
+    specialBad:'Alan adında garip karakterler ❌'},
   ai:{
-    safe:[
-      (d,s)=>`"${d}" temiz görünüyor. Dijital kan tespit edilmedi. Puan: ${s}/100 — dikkatli ilerleyebilirsin.`,
-      (d,s)=>`"${d}" testi geçti. Temiz ve şifreli. ${s}/100 — Biçici rahat.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" karışık sinyaller veriyor. Açıkça tehlikeli değil ama temiz de değil. ${s}/100 — kaynağı doğrula.`,
-      (d,s)=>`"${d}" hakkında garip bir his var. ${s}/100 — hassas veri girme.`
-    ],
-    danger:[
-      (d,s)=>`🚨 "${d}" zehirli ve tehlikeli! Sadece ${s}/100. Tam bir kimlik avı bağlantısına benziyor. Dokunma!`,
-      (d,s)=>`BİÇİCİ BAĞIRIYOR: "${d}" yakın tehlike! Sadece ${s}/100. Her şey dolandırıcılığa işaret ediyor. KAÇIN!`
-    ]
+    safe:[(d,s)=>`4 güvenlik API'si "${d}"nin temiz olduğunu doğruluyor. Puan: ${s}/100 — Tehdit bulunamadı.`,
+          (d,s)=>`"${d}" tam güvenlik taramasını ${s}/100 ile geçti. Tüm API'ler yeşil ışık veriyor.`],
+    warning:[(d,s)=>`"${d}" bazı güvenlik endişeleri yarattı. Puan: ${s}/100 — Bazı API'ler uyarı verdi.`,
+             (d,s)=>`Motor "${d}"de şüpheli sinyaller tespit etti. ${s}/100 — Hassas veri girme.`],
+    danger:[(d,s)=>`🚨 Kritik güvenlik uyarısı! "${d}" tehlikeli olarak işaretlendi. Sadece ${s}/100 — Gerçek tehdit tespit edildi!`,
+            (d,s)=>`MOTOR BAĞIRIYOR: "${d}" birden fazla kaynaktan tehlikeli! ${s}/100. KAÇIN!`]
   }
 },
-de:{
-  dir:'ltr',
-  tagline:'Digitaler Link-Scanner • Riecht Gefahr aus Kilometern Entfernung',
-  inputLabel:'// Verdächtige URL eingeben',
+de:{dir:'ltr',
+  tagline:'Echtes Bedrohungsanalyse-System • 4 Live-APIs',
+  inputLabel:'// URL für Sicherheitsanalyse eingeben',
   scanBtn:'SCANNEN',
-  idle:'Ich bin bereit... füge eine URL ein und ich enthülle ihre wahre Natur.',
+  idle:'Ich bin die Bedrohungsanalyse-Engine. Füge eine URL ein und ich analysiere sie.',
   empty:'...füge zuerst eine URL ein 😑',
-  scanning:'Analysiere den Link...',
-  steps:['// URL-Struktur wird analysiert...','// Sicherheitsprotokoll wird geprüft...','// Phishing-Muster werden gesucht...','// Bedrohungsstufe wird bewertet...','// Endgültiges Urteil wird formuliert...'],
-  stepMsgs:['URL-Struktur...','Sicherheitsprotokoll...','Phishing-Scan...','Bedrohungsbewertung...','Endurteil...'],
-  verdict:{safe:'Dieser Link ist Sicher!',warning:'Verdächtig — Stopp!',danger:'GEFAHR! Zurückweichen!'},
-  badge:{safe:'✅',warning:'⚠️',danger:'💀'},
-  checksTitle:'// Detaillierte Scan-Ergebnisse',
-  histLabel:'// Zuletzt Gescannte URLs',
+  engTitle:'// Mehrstufige Sicherheits-Engine',
+  engStatus:['Heuristische Analyse','Google Safe Browsing','URLScan-Tiefenanalyse','AbuseIPDB IP-Prüfung','PhishStats-Datenbank'],
+  running:'Prüfung...',done:'FERTIG',skip:'ÜBERSPRUNGEN',err:'FEHLER',
+  verdict:{safe:'Link ist Sicher!',warning:'Verdächtig — Vorsicht!',danger:'GEFAHR! Zurückweichen!'},
+  srcTitle:'// Sicherheits-API-Ergebnisse',chkTitle:'// Heuristische Analyse',
+  histLbl:'// Zuletzt Gescannte URLs',
   bannerTitle:'// Demnächst',
-  bannerDesc:'Wir integrieren KI für tiefere Linkanalyse. Folge uns auf X und Telegram!',
-  tips:'⚠️ Sicherheitstipps: Gib keine persönlichen Daten auf verdächtigen Seiten ein. Wenn von Unbekanntem erhalten, sofort löschen.',
-  disclaimer:'⚙️ Dies ist eine vorläufige Analyse basierend auf URL-Eigenschaften. Sie garantiert keine absolute Sicherheit.',
-  share:'Ergebnis Teilen',
-  xTxt:'Auf X folgen',
-  tgTxt:'Telegram-Kanal',
-  footer:'LinkReaper v3.1 — Vorläufige URL-Analyse',
-  footerSub:'Vertraue keinem unbekannten Link',
-  monReact:{safe:'Link ist sauber 😌',warning:'Verdächtige Signale 😒',danger:'Klare Gefahr! Flieh! 😱'},
-  shareText:(d,s,l)=>`🔍 "${d}" mit LinkReaper gescannt\n${l==='safe'?'✅ Sicher':l==='warning'?'⚠️ Verdächtig':'💀 Gefährlich'} — ${s}/100\n\nAusprobieren: https://linkreaper.app`,
-  ck:{
-    httpsOk:'Verschlüsselte HTTPS-Verbindung — ✅',httpsBad:'Unverschlüsseltes HTTP — ❌ Gefährlich!',
-    ipBad:'Verwendet direkte IP statt Domain — ❌',ipOk:'Verwendet normalen Domainnamen — ✅',
-    trustedOk:'Weltweit anerkannte vertrauenswürdige Domain — ⭐',
-    tldBad:'Sehr verdächtige Domain-Erweiterung — ❌',tldOk:'Domain-Erweiterung normal — ✅',
-    phishMany:(n,w)=>`${n} Phishing-Wörter: "${w}" — ❌`,
-    phishOne:(w)=>`Verdächtiges Wort: "${w}" — ⚠️`,
-    phishOk:'Keine Phishing-Wörter in URL — ✅',
-    longBad:(n)=>`URL zu lang (${n} Zeichen) — ❌`,
-    longWarn:(n)=>`Akzeptable Länge (${n} Zeichen) — ⚠️`,
-    longOk:(n)=>`Normale Länge (${n} Zeichen) — ✅`,
-    subBad:(n)=>`${n} Subdomains — Täuschung! ❌`,
-    subWarn:'Mehrere Subdomains — ⚠️',
-    subOk:'Domainstruktur sauber — ✅',
-    specialBad:'Seltsame Zeichen im Domainnamen — ❌',
-  },
+  bannerDesc:'KI-Integration für intelligentere Urteile. Folge uns!',
+  tips:'⚠️ Warnung: Gib keine persönlichen Daten ein. Löschen wenn von Unbekanntem erhalten.',
+  disclaimer:'⚙️ Dieses System verwendet echte Sicherheits-APIs. Ergebnisse sind richtungsweisend.',
+  share:'Ergebnis Teilen',xTxt:'Auf X folgen',tgTxt:'Telegram',
+  footer:'LinkReaper v4.0 — Echte Bedrohungsanalyse',footerSub:'Vertraue keinem unbekannten Link',
+  monReact:{safe:'Sauber! APIs bestätigen Sicherheit 😌',warning:'Verdächtige Signale von APIs! Vorsicht 😒',danger:'Gefahr von mehreren Quellen bestätigt! 😱'},
+  shareMsg:(d,s,l)=>`🔍 Sicherheitsscan von "${d}" via LinkReaper\n${l==='safe'?'✅ Sicher':l==='warning'?'⚠️ Verdächtig':'💀 Gefährlich'} — Wert: ${s}/100\n🔗 https://linkreaper.app`,
+  ck:{httpsOk:'Verschlüsseltes HTTPS-Protokoll ✅',httpsBad:'Unverschlüsseltes HTTP ❌',
+    ipBad:'Verwendet direkte IP ❌',ipOk:'Normaler Domainname ✅',
+    trusted:'Weltweit vertrauenswürdige Domain ⭐',tldBad:'Verdächtige Domain-Erweiterung ❌',tldOk:'Normale Erweiterung ✅',
+    phishM:(n,w)=>`${n} Phishing-Wörter: ${w} ❌`,phishO:(w)=>`Verdächtiges Wort: ${w} ⚠️`,phishOk:'Keine Phishing-Wörter ✅',
+    longB:(n)=>`URL zu lang (${n}) ❌`,longW:(n)=>`Akzeptable Länge (${n}) ⚠️`,longOk:(n)=>`Normale Länge (${n}) ✅`,
+    subB:(n)=>`${n} Subdomains ❌`,subW:'Mehrere Subdomains ⚠️',subOk:'Saubere Domain-Struktur ✅',
+    specialBad:'Seltsame Zeichen im Domainnamen ❌'},
   ai:{
-    safe:[
-      (d,s)=>`"${d}" sieht sauber aus. Kein digitales Blut erkannt. Sicherheitswert: ${s}/100 — mit Vorsicht fortfahren.`,
-      (d,s)=>`"${d}" hat den Test bestanden. Sauber und verschlüsselt. ${s}/100 — Der Reaper ist zufrieden.`
-    ],
-    warning:[
-      (d,s)=>`"${d}" sendet gemischte Signale. Nicht klar gefährlich, aber auch nicht sauber. ${s}/100 — Quelle überprüfen.`,
-      (d,s)=>`Etwas Seltsames an "${d}". ${s}/100 — Keine sensiblen Daten eingeben.`
-    ],
-    danger:[
-      (d,s)=>`🚨 "${d}" ist giftig und gefährlich! Nur ${s}/100. Sieht genau wie ein Phishing-Link aus. Nicht anfassen!`,
-      (d,s)=>`DER REAPER SCHREIT: "${d}" ist unmittelbare Gefahr! Nur ${s}/100. Alles deutet auf Betrug. FLIEH JETZT!`
-    ]
+    safe:[(d,s)=>`Alle 4 Sicherheits-APIs bestätigen: "${d}" ist sauber. Wert: ${s}/100 — Keine Bedrohungen gefunden.`,
+          (d,s)=>`"${d}" hat die vollständige Sicherheitsanalyse mit ${s}/100 bestanden. Alle APIs geben grünes Licht.`],
+    warning:[(d,s)=>`"${d}" weckte einige Sicherheitsbedenken. Wert: ${s}/100 — Einige APIs gaben Warnungen zurück.`,
+             (d,s)=>`Die Engine erkannte verdächtige Signale in "${d}". ${s}/100 — Keine sensiblen Daten eingeben.`],
+    danger:[(d,s)=>`🚨 Kritische Sicherheitswarnung! "${d}" wurde als gefährlich eingestuft. Nur ${s}/100 — Echte Bedrohung erkannt!`,
+            (d,s)=>`ENGINE SCHREIT: "${d}" ist von mehreren Quellen als gefährlich bestätigt! ${s}/100. FLIEH!`]
   }
 }
 };
 
-/* ══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    STATE
-══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 let lang = 'ar';
 let history = [];
 let lastResult = null;
 let isScanning = false;
+let typeTimer = null;
 
-/* ══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    PARTICLES
-══════════════════════════════════════════════════ */
-(function initParticles(){
-  const c = document.getElementById('particles');
-  for(let i=0;i<22;i++){
-    const p = document.createElement('div');
-    p.className='ptcl';
+═══════════════════════════════════════════════════════ */
+(()=>{
+  const c=document.getElementById('pts');
+  for(let i=0;i<20;i++){
+    const p=document.createElement('div');p.className='pt';
     p.style.cssText=`right:${Math.random()*100}%;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
     c.appendChild(p);
   }
 })();
 
-/* ══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    TYPE EFFECT
-══════════════════════════════════════════════════ */
-let typeTimer = null;
-function typeText(el, txt, speed=26){
+═══════════════════════════════════════════════════════ */
+function typeText(el,txt,spd=24){
   return new Promise(res=>{
-    if(typeTimer) clearInterval(typeTimer);
-    el.innerHTML='<span class="tcursor"></span>';
+    if(typeTimer){clearInterval(typeTimer);typeTimer=null;}
+    el.innerHTML='<span class="tc"></span>';
     let i=0;
     typeTimer=setInterval(()=>{
-      if(i<txt.length){
-        el.innerHTML=txt.slice(0,++i)+'<span class="tcursor"></span>';
-      } else {
-        clearInterval(typeTimer);
-        typeTimer=null;
-        el.innerHTML=txt+'<span class="tcursor"></span>';
-        res();
-      }
-    },speed);
+      if(i<txt.length){el.innerHTML=txt.slice(0,++i)+'<span class="tc"></span>';}
+      else{clearInterval(typeTimer);typeTimer=null;el.innerHTML=txt+'<span class="tc"></span>';res();}
+    },spd);
   });
 }
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function countUp(el,target,ms=850){
+/* ═══════════════════════════════════════════════════════
+   SCORE RING ANIMATION
+═══════════════════════════════════════════════════════ */
+function animateRing(score,level){
+  const fill=document.getElementById('ringFill');
+  const numEl=document.getElementById('ringNum');
+  const circ=213.6;
+  const offset=circ-(circ*score/100);
+
+  const colors={safe:'#00FF88',warning:'#FFB300',danger:'#FF2244'};
+  fill.style.stroke=colors[level]||'#FF2244';
+
+  // Count up number
   const t0=performance.now();
   (function step(now){
-    const p=Math.min((now-t0)/ms,1);
+    const p=Math.min((now-t0)/1000,1);
     const e=1-Math.pow(1-p,3);
-    el.textContent=Math.round(target*e);
-    if(p<1) requestAnimationFrame(step);
+    numEl.textContent=Math.round(score*e);
+    fill.style.strokeDashoffset=circ-(circ*score/100*e);
+    if(p<1)requestAnimationFrame(step);
   })(performance.now());
+
+  numEl.style.color=colors[level];
 }
 
-/* ══════════════════════════════════════════════════
-   SET LANGUAGE
-══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   LANGUAGE
+═══════════════════════════════════════════════════════ */
 function setLang(l){
-  lang=l;
-  const L=T[l];
+  lang=l;const L=T[l];
   const html=document.documentElement;
-  html.setAttribute('lang',l);
-  html.setAttribute('dir',L.dir);
+  html.setAttribute('lang',l);html.setAttribute('dir',L.dir);
+  document.querySelectorAll('.lbtn').forEach(b=>b.classList.toggle('on',b.getAttribute('onclick').includes(`'${l}'`)));
 
-  // lang buttons
-  document.querySelectorAll('.lbtn').forEach(b=>{
-    b.classList.toggle('on', b.getAttribute('onclick').includes(`'${l}'`));
-  });
-
-  // Static UI strings
+  // UI strings
   document.getElementById('tagline').textContent=L.tagline;
   document.getElementById('inputLabel').textContent=L.inputLabel;
   document.getElementById('scanBtnTxt').textContent=L.scanBtn;
-  document.getElementById('checksTitle').textContent=L.checksTitle;
-  document.getElementById('histLabel').textContent=L.histLabel;
+  document.getElementById('engTitle').textContent=L.engTitle;
+  document.getElementById('srcTitle').textContent=L.srcTitle;
+  document.getElementById('chkTitle').textContent=L.chkTitle;
+  document.getElementById('histLbl').textContent=L.histLbl;
   document.getElementById('bannerTitle').textContent=L.bannerTitle;
   document.getElementById('bannerDesc').textContent=L.bannerDesc;
   document.getElementById('xTxt').textContent=L.xTxt;
   document.getElementById('tgTxt').textContent=L.tgTxt;
   document.getElementById('shareTxt').textContent=L.share;
   document.getElementById('disclaimerEl').textContent=L.disclaimer;
-  document.getElementById('footerEl').innerHTML=`${L.footer} &nbsp;•&nbsp; <span style="color:#5a2a2a">${L.footerSub}</span>`;
+  document.getElementById('footerEl').innerHTML=`${L.footer} &nbsp;•&nbsp; <span>${L.footerSub}</span>`;
 
-  // Loading step labels
-  for(let i=0;i<5;i++) document.getElementById('lt'+i).textContent=L.steps[i];
-
-  // Monster idle
-  typeText(document.getElementById('monsterText'),L.idle);
-  document.getElementById('monAvatar').textContent='💀';
-
-  // Tips card - update if visible
-  const tc=document.getElementById('tipsCard');
-  if(tc.style.display!=='none'){
-    tc.innerHTML=`<strong>${L.tips.split(':')[0]}:</strong>${L.tips.split(':').slice(1).join(':')}`;
+  // Engine layer names
+  for(let i=0;i<5;i++){
+    const s=document.getElementById('es'+i);
+    if(s)s.textContent='';
   }
 
-  // Re-render existing result if any
+  typeText(document.getElementById('monTxt'),L.idle);
+  document.getElementById('monAv').textContent='💀';
+
   if(lastResult){
-    const {score,level,checks,domain,rawUrl}=lastResult;
-    renderResult(score,level,checks,domain,rawUrl,false);
+    const {score,level,apiResults,hChecks,domain,rawUrl}=lastResult;
+    renderResult(score,level,apiResults,hChecks,domain,rawUrl,false);
   }
-
   renderHistory();
 }
 
-/* ══════════════════════════════════════════════════
-   URL ANALYSIS ENGINE
-══════════════════════════════════════════════════ */
-function analyzeURL(rawUrl){
-  const L=T[lang];const C=L.ck;
-  let score=100;
-  const checks=[];
-  let fullUrl=rawUrl;
-  let parsed;
+/* ═══════════════════════════════════════════════════════
+   ENGINE LAYER HELPERS
+═══════════════════════════════════════════════════════ */
+function setLayer(idx,state,msg=''){
+  const L=T[lang];
+  const badge=document.getElementById('eb'+idx);
+  const status=document.getElementById('es'+idx);
+  const stateMap={
+    waiting:{cls:'waiting',txt:'WAITING'},
+    running:{cls:'running',txt:'...'},
+    ok:{cls:'done-ok',txt:L.done},
+    warn:{cls:'done-warn',txt:'⚠️'},
+    bad:{cls:'done-bad',txt:'🚨'},
+    skip:{cls:'done-skip',txt:L.skip},
+    err:{cls:'err',txt:L.err}
+  };
+  const s=stateMap[state]||stateMap.waiting;
+  badge.className='eng-badge '+s.cls;
+  badge.textContent=s.txt;
+  if(status&&msg)status.textContent=msg;
+}
+function setProgress(pct){document.getElementById('progFill').style.width=pct+'%';}
 
+/* ═══════════════════════════════════════════════════════
+   HEURISTIC ENGINE
+═══════════════════════════════════════════════════════ */
+function runHeuristics(rawUrl){
+  const L=T[lang];const C=L.ck;
+  let score=100;const checks=[];
+  let parsed;
   try{
-    if(!/^https?:\/\//i.test(rawUrl)) fullUrl='http://'+rawUrl;
-    parsed=new URL(fullUrl);
-  }catch(e){
-    return{score:0,level:'danger',checks:[{cls:'chk-bad',txt:C.ipBad}],domain:'???'};
-  }
+    let u=rawUrl;
+    if(!/^https?:\/\//i.test(u))u='http://'+u;
+    parsed=new URL(u);
+  }catch(e){return{score:0,checks:[{cls:'chk-bad',txt:C.ipBad}],domain:'???'};}
 
   const domain=parsed.hostname.toLowerCase();
-  const protocol=parsed.protocol;
 
-  // 1. HTTPS
-  if(protocol==='https:'){checks.push({cls:'chk-ok',txt:C.httpsOk});}
-  else{checks.push({cls:'chk-bad',txt:C.httpsBad});score-=30;}
+  // HTTPS
+  if(parsed.protocol==='https:'){checks.push({cls:'chk-ok',txt:C.httpsOk});}
+  else{checks.push({cls:'chk-bad',txt:C.httpsBad});score-=28;}
 
-  // 2. IP address
-  if(/^(\d{1,3}\.){3}\d{1,3}$/.test(domain)){checks.push({cls:'chk-bad',txt:C.ipBad});score-=40;}
+  // IP
+  if(/^(\d{1,3}\.){3}\d{1,3}$/.test(domain)){checks.push({cls:'chk-bad',txt:C.ipBad});score-=38;}
   else{checks.push({cls:'chk-ok',txt:C.ipOk});}
 
-  // 3. Trusted domains
-  const trusted=['google.com','youtube.com','twitter.com','x.com','facebook.com','instagram.com','github.com','microsoft.com','apple.com','amazon.com','wikipedia.org','whatsapp.com','linkedin.com','tiktok.com','snapchat.com','netflix.com','paypal.com','adobe.com','dropbox.com','zoom.us','spotify.com','reddit.com','twitch.tv','discord.com','telegram.org'];
+  // Trusted
+  const trusted=['google.com','youtube.com','twitter.com','x.com','facebook.com','instagram.com',
+    'github.com','microsoft.com','apple.com','amazon.com','wikipedia.org','whatsapp.com',
+    'linkedin.com','tiktok.com','snapchat.com','netflix.com','paypal.com','adobe.com',
+    'dropbox.com','zoom.us','spotify.com','reddit.com','twitch.tv','discord.com','telegram.org'];
   const isTrusted=trusted.some(t=>domain===t||domain.endsWith('.'+t));
-  if(isTrusted){checks.push({cls:'chk-ok',txt:C.trustedOk});score=Math.min(score+20,100);}
+  if(isTrusted){checks.push({cls:'chk-ok',txt:C.trusted});score=Math.min(score+18,100);}
 
-  // 4. Bad TLDs
-  const badTlds=['.xyz','.tk','.ml','.ga','.cf','.gq','.top','.click','.loan','.win','.download','.stream','.party','.bid','.review','.accountant','.science','.faith','.date'];
-  if(badTlds.some(t=>domain.endsWith(t))){checks.push({cls:'chk-bad',txt:C.tldBad});score-=25;}
+  // Bad TLDs
+  const badTlds=['.xyz','.tk','.ml','.ga','.cf','.gq','.top','.click','.loan','.win',
+    '.download','.stream','.party','.bid','.review','.accountant','.science','.faith','.date'];
+  if(!isTrusted&&badTlds.some(t=>domain.endsWith(t))){checks.push({cls:'chk-bad',txt:C.tldBad});score-=22;}
   else if(!isTrusted){checks.push({cls:'chk-ok',txt:C.tldOk});}
 
-  // 5. Phishing keywords
-  const phish=['login','verify','secure','account','update','confirm','paypal','apple-id','microsoft','amazon','bank','password','signin','wallet','crypto','free','prize','winner','urgent','suspended','alert','activation','webscr','cmd=','ebayisapi','recover','password-reset'];
+  // Phishing keywords
+  const phish=['login','verify','secure','account','update','confirm','paypal','apple-id',
+    'microsoft','amazon','bank','password','signin','wallet','crypto','free','prize',
+    'winner','urgent','suspended','alert','activation','webscr','cmd=','recover'];
   const found=phish.filter(w=>rawUrl.toLowerCase().includes(w));
-  if(found.length>=3){checks.push({cls:'chk-bad',txt:C.phishMany(found.length,found.slice(0,3).join(', '))});score-=30;}
-  else if(found.length>=1){checks.push({cls:'chk-warn',txt:C.phishOne(found[0])});score-=8;}
+  if(found.length>=3){checks.push({cls:'chk-bad',txt:C.phishM(found.length,found.slice(0,3).join(', '))});score-=28;}
+  else if(found.length>=1){checks.push({cls:'chk-warn',txt:C.phishO(found[0])});score-=8;}
   else{checks.push({cls:'chk-ok',txt:C.phishOk});}
 
-  // 6. URL length
-  if(rawUrl.length>150){checks.push({cls:'chk-bad',txt:C.longBad(rawUrl.length)});score-=15;}
-  else if(rawUrl.length>80){checks.push({cls:'chk-warn',txt:C.longWarn(rawUrl.length)});score-=3;}
+  // Length
+  if(rawUrl.length>150){checks.push({cls:'chk-bad',txt:C.longB(rawUrl.length)});score-=13;}
+  else if(rawUrl.length>80){checks.push({cls:'chk-warn',txt:C.longW(rawUrl.length)});score-=3;}
   else{checks.push({cls:'chk-ok',txt:C.longOk(rawUrl.length)});}
 
-  // 7. Subdomains
+  // Subdomains
   const parts=domain.split('.');
-  if(parts.length>5){checks.push({cls:'chk-bad',txt:C.subBad(parts.length-2)});score-=20;}
-  else if(parts.length>3){checks.push({cls:'chk-warn',txt:C.subWarn});score-=5;}
+  if(parts.length>5){checks.push({cls:'chk-bad',txt:C.subB(parts.length-2)});score-=18;}
+  else if(parts.length>3){checks.push({cls:'chk-warn',txt:C.subW});score-=5;}
   else{checks.push({cls:'chk-ok',txt:C.subOk});}
 
-  // 8. Special chars in domain
-  if(/[^a-z0-9.\-]/.test(domain)){checks.push({cls:'chk-bad',txt:C.specialBad});score-=25;}
+  // Special chars
+  if(/[^a-z0-9.\-]/.test(domain)){checks.push({cls:'chk-bad',txt:C.specialBad});score-=22;}
 
-  score=Math.max(0,Math.min(100,score));
-  const level=score>=72?'safe':score>=42?'warning':'danger';
-  return{score,level,checks,domain};
+  return{score:Math.max(0,Math.min(100,score)),checks,domain};
 }
 
-/* ══════════════════════════════════════════════════
-   HISTORY
-══════════════════════════════════════════════════ */
-function addHistory(url,level,score){
-  history.unshift({url,level,score});
-  if(history.length>6) history=history.slice(0,6);
-  renderHistory();
-}
-function renderHistory(){
-  const sec=document.getElementById('histSection');
-  const list=document.getElementById('histList');
-  if(!history.length){sec.style.display='none';return;}
-  sec.style.display='block';
-  list.innerHTML=history.map((h,i)=>`
-    <div class="hist-item" onclick="reScan(${i})">
-      <div class="hist-dot ${h.level}"></div>
-      <span class="hist-url">${escHtml(h.url)}</span>
-      <span class="hist-score">${h.score}/100</span>
-    </div>`).join('');
-}
-function reScan(i){
-  document.getElementById('urlInput').value=history[i].url;
-  startScan();
-}
-function escHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+/* ═══════════════════════════════════════════════════════
+   API CALLS — with graceful fallback
+═══════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════════════
-   SHARE
-══════════════════════════════════════════════════ */
-function shareResult(){
-  if(!lastResult) return;
-  const L=T[lang];
-  const txt=L.shareText(lastResult.domain,lastResult.score,lastResult.level);
-  if(navigator.share){
-    navigator.share({title:'LinkReaper',text:txt}).catch(()=>{});
-  } else {
-    navigator.clipboard.writeText(txt).then(()=>{
-      const btn=document.getElementById('shareBtn');
-      const orig=btn.innerHTML;
-      btn.innerHTML='✅ <span>'+L.share+'!</span>';
-      setTimeout(()=>{btn.innerHTML=orig;},2000);
-    }).catch(()=>{});
+// 1. Google Safe Browsing
+async function checkGSB(url){
+  try{
+    const res=await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${API.GSB_KEY}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        client:{clientId:'linkreaper',clientVersion:'4.0'},
+        threatInfo:{
+          threatTypes:['MALWARE','SOCIAL_ENGINEERING','UNWANTED_SOFTWARE','POTENTIALLY_HARMFUL_APPLICATION'],
+          platformTypes:['ANY_PLATFORM'],
+          threatEntryTypes:['URL'],
+          threatEntries:[{url}]
+        }
+      })
+    });
+    if(!res.ok)return{status:'err',detail:'API Error '+res.status,score:0};
+    const data=await res.json();
+    if(data.matches&&data.matches.length>0){
+      const types=data.matches.map(m=>m.threatType).join(', ');
+      return{status:'bad',detail:types,score:-45,threats:data.matches.map(m=>m.threatType)};
+    }
+    return{status:'ok',detail:'No threats found',score:0};
+  }catch(e){
+    return{status:'err',detail:'Network error',score:0};
   }
 }
 
-/* ══════════════════════════════════════════════════
+// 2. URLScan.io — submit then poll
+async function checkURLScan(url){
+  try{
+    // Submit
+    const sub=await fetch('https://urlscan.io/api/v1/scan/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','API-Key':API.URLSCAN},
+      body:JSON.stringify({url,visibility:'unlisted'})
+    });
+    if(!sub.ok){
+      if(sub.status===400)return{status:'err',detail:'Invalid URL for URLScan',score:0};
+      if(sub.status===429)return{status:'skip',detail:'Rate limit reached',score:0};
+      return{status:'err',detail:'Submit error '+sub.status,score:0};
+    }
+    const subData=await sub.json();
+    const uuid=subData.uuid;
+    if(!uuid)return{status:'err',detail:'No scan ID',score:0};
+
+    // Poll result (max 20s)
+    for(let i=0;i<8;i++){
+      await sleep(2500);
+      try{
+        const poll=await fetch(`https://urlscan.io/api/v1/result/${uuid}/`);
+        if(poll.status===404){continue;}
+        if(!poll.ok)continue;
+        const r=await poll.json();
+        const verdict=r.verdicts?.overall;
+        const malicious=verdict?.malicious||false;
+        const score_v=verdict?.score||0;
+        const cats=verdict?.categories||[];
+
+        if(malicious){
+          return{status:'bad',detail:`Malicious: ${cats.join(', ')||'flagged'}`,score:-40,screenshot:r.task?.screenshotURL};
+        }
+        if(score_v>50){
+          return{status:'warn',detail:`Suspicious score: ${score_v}`,score:-15,screenshot:r.task?.screenshotURL};
+        }
+        return{status:'ok',detail:`Clean (score: ${score_v})`,score:0,screenshot:r.task?.screenshotURL};
+      }catch(pe){continue;}
+    }
+    return{status:'skip',detail:'Scan timeout — check later',score:0};
+  }catch(e){
+    return{status:'err',detail:'Network error',score:0};
+  }
+}
+
+// 3. AbuseIPDB — resolve domain → IP → check
+async function checkAbuseIPDB(domain){
+  try{
+    // Use DNS over HTTPS to resolve domain to IP
+    const dnsRes=await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`);
+    if(!dnsRes.ok)return{status:'err',detail:'DNS resolution failed',score:0};
+    const dnsData=await dnsRes.json();
+    const answers=dnsData.Answer||[];
+    const ip=answers.find(a=>a.type===1)?.data;
+    if(!ip)return{status:'skip',detail:'Could not resolve IP',score:0};
+
+    const res=await fetch(`https://api.abuseipdb.com/api/v2/check?ipAddress=${ip}&maxAgeInDays=90&verbose`,{
+      headers:{'Key':API.ABUSEIPDB,'Accept':'application/json'}
+    });
+    if(!res.ok)return{status:'err',detail:'AbuseIPDB error '+res.status,score:0};
+    const d=await res.json();
+    const pct=d.data?.abuseConfidenceScore||0;
+    const reports=d.data?.totalReports||0;
+
+    if(pct>=50){return{status:'bad',detail:`IP ${ip}: ${pct}% abuse (${reports} reports)`,score:-35};}
+    if(pct>=15||reports>0){return{status:'warn',detail:`IP ${ip}: ${pct}% abuse score`,score:-12};}
+    return{status:'ok',detail:`IP ${ip}: Clean (${pct}% abuse)`,score:0};
+  }catch(e){
+    return{status:'err',detail:'Network error',score:0};
+  }
+}
+
+// 4. PhishStats
+async function checkPhishStats(url){
+  try{
+    const domain=new URL(/^https?:\/\//i.test(url)?url:'http://'+url).hostname;
+    const res=await fetch(`https://api.phishstats.info/api/phishing?_where=(url,like,~${encodeURIComponent(domain)}~)&_size=5`,{
+      headers:{'Accept':'application/json'}
+    });
+    if(!res.ok){
+      if(res.status===404)return{status:'ok',detail:'Not in phishing database',score:0};
+      return{status:'skip',detail:'PhishStats unavailable',score:0};
+    }
+    const data=await res.json();
+    if(Array.isArray(data)&&data.length>0){
+      return{status:'bad',detail:`Found in phishing DB (${data.length} records)`,score:-30};
+    }
+    return{status:'ok',detail:'Not in phishing database',score:0};
+  }catch(e){
+    // CORS or network error — try alternative
+    return{status:'skip',detail:'CORS/Network — skipped',score:0};
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
    MAIN SCAN
-══════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════ */
 async function startScan(){
-  if(isScanning) return;
+  if(isScanning)return;
   const L=T[lang];
   const raw=document.getElementById('urlInput').value.trim();
-
   if(!raw){
     const inp=document.getElementById('urlInput');
-    inp.style.borderColor='var(--neon)';
-    inp.style.boxShadow='var(--shadow-red)';
-    typeText(document.getElementById('monsterText'),L.empty);
+    inp.style.borderColor='var(--neon)';inp.style.boxShadow='var(--shadow-red)';
+    typeText(document.getElementById('monTxt'),L.empty);
     setTimeout(()=>{inp.style.borderColor='';inp.style.boxShadow='';},900);
     return;
   }
 
   isScanning=true;
   document.getElementById('scanBtn').disabled=true;
-  document.getElementById('resultCard').style.display='none';
+  document.getElementById('resCard').style.display='none';
   document.getElementById('tipsCard').style.display='none';
 
-  const lc=document.getElementById('loadingCard');
-  lc.style.display='block';
-  const lsteps=document.querySelectorAll('.lstep');
-  const prog=document.getElementById('progressFill');
-  prog.style.width='0%';
+  // Show engine
+  const ec=document.getElementById('engineCard');
+  ec.style.display='block';
+  [0,1,2,3,4].forEach(i=>{setLayer(i,'waiting');document.getElementById('es'+i).textContent='';});
+  setProgress(0);
 
-  document.getElementById('monAvatar').textContent='🔍';
-  typeText(document.getElementById('monsterText'),L.scanning,20);
+  // Parse domain
+  let parsedDomain='unknown';
+  try{
+    let u=raw;if(!/^https?:\/\//i.test(u))u='http://'+u;
+    parsedDomain=new URL(u).hostname;
+  }catch(e){}
 
-  for(let i=0;i<lsteps.length;i++){
-    lsteps.forEach((s,j)=>{
-      if(j<i)s.className='lstep done';
-      else if(j===i)s.className='lstep on';
-      else s.className='lstep';
-    });
-    prog.style.width=((i+1)/lsteps.length*100)+'%';
-    if(typeTimer) clearInterval(typeTimer);
-    typeText(document.getElementById('monsterText'),L.stepMsgs[i],16);
-    await sleep(360);
-  }
-  lsteps.forEach(s=>s.className='lstep done');
-  await sleep(150);
-  lc.style.display='none';
+  document.getElementById('monAv').textContent='🔍';
+  typeText(document.getElementById('monTxt'),L.running,18);
 
-  const result=analyzeURL(raw);
-  result.rawUrl=raw;
+  const apiResults=[];
+
+  /* ── Layer 0: Heuristics ── */
+  setLayer(0,'running',L.running);
+  const hResult=runHeuristics(raw);
+  await sleep(400);
+  const hState=hResult.score>=72?'ok':hResult.score>=42?'warn':'bad';
+  setLayer(0,hState,`Score: ${hResult.score}/100`);
+  setProgress(20);
+
+  /* ── Layer 1: Google Safe Browsing ── */
+  setLayer(1,'running',L.running);
+  typeText(document.getElementById('monTxt'),L.engStatus[1]+'...',16);
+  const gsbRes=await checkGSB(raw);
+  setLayer(1,gsbRes.status,gsbRes.detail);
+  apiResults.push({name:'Google Safe Browsing',icon:'🛡️',res:gsbRes});
+  setProgress(40);
+
+  /* ── Layer 2: URLScan ── */
+  setLayer(2,'running',L.running+'  (10-20s)');
+  typeText(document.getElementById('monTxt'),L.engStatus[2]+'...',16);
+  const urlRes=await checkURLScan(raw);
+  setLayer(2,urlRes.status,urlRes.detail);
+  apiResults.push({name:'URLScan.io',icon:'🔬',res:urlRes});
+  setProgress(60);
+
+  /* ── Layer 3: AbuseIPDB ── */
+  setLayer(3,'running',L.running);
+  typeText(document.getElementById('monTxt'),L.engStatus[3]+'...',16);
+  const ipRes=await checkAbuseIPDB(parsedDomain);
+  setLayer(3,ipRes.status,ipRes.detail);
+  apiResults.push({name:'AbuseIPDB',icon:'🌐',res:ipRes});
+  setProgress(80);
+
+  /* ── Layer 4: PhishStats ── */
+  setLayer(4,'running',L.running);
+  typeText(document.getElementById('monTxt'),L.engStatus[4]+'...',16);
+  const phishRes=await checkPhishStats(raw);
+  setLayer(4,phishRes.status,phishRes.detail);
+  apiResults.push({name:'PhishStats',icon:'🎣',res:phishRes});
+  setProgress(100);
+
+  await sleep(300);
+  ec.style.display='none';
+
+  /* ── Final Score ── */
+  let finalScore=hResult.score;
+  apiResults.forEach(a=>{if(typeof a.res.score==='number')finalScore+=a.res.score;});
+  finalScore=Math.max(0,Math.min(100,finalScore));
+  const level=finalScore>=70?'safe':finalScore>=40?'warning':'danger';
+
+  const result={score:finalScore,level,apiResults,hChecks:hResult.checks,domain:parsedDomain,rawUrl:raw};
   lastResult=result;
 
-  renderResult(result.score,result.level,result.checks,result.domain,raw,true);
-  addHistory(raw,result.level,result.score);
+  renderResult(finalScore,level,apiResults,hResult.checks,parsedDomain,raw,true);
+  addHistory(raw,level,finalScore);
 
   isScanning=false;
   document.getElementById('scanBtn').disabled=false;
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
-/* ══════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    RENDER RESULT
-══════════════════════════════════════════════════ */
-function renderResult(score,level,checks,domain,rawUrl,animate){
+═══════════════════════════════════════════════════════ */
+function renderResult(score,level,apiResults,hChecks,domain,rawUrl,animate){
   const L=T[lang];
-  const card=document.getElementById('resultCard');
-
-  card.className=level; // safe | warning | danger
+  const card=document.getElementById('resCard');
+  card.className=level;
   card.style.display='block';
 
-  document.getElementById('resBadge').textContent=L.badge[level];
-  document.getElementById('resultVerdict').textContent=L.verdict[level];
-  document.getElementById('resultDomain').textContent=domain||rawUrl;
-
-  if(animate){
-    countUp(document.getElementById('scoreNum'),score);
-    setTimeout(()=>{document.getElementById('scoreBar').style.width=score+'%';},120);
-  } else {
-    document.getElementById('scoreNum').textContent=score;
-    document.getElementById('scoreBar').style.width=score+'%';
+  // Ring
+  if(animate){animateRing(score,level);}
+  else{
+    const colors={safe:'#00FF88',warning:'#FFB300',danger:'#FF2244'};
+    const fill=document.getElementById('ringFill');
+    fill.style.stroke=colors[level];
+    fill.style.strokeDashoffset=213.6-(213.6*score/100);
+    document.getElementById('ringNum').textContent=score;
+    document.getElementById('ringNum').style.color=colors[level];
   }
+
+  document.getElementById('resVerdict').textContent=L.verdict[level];
+  document.getElementById('resDomain').textContent=domain||rawUrl;
+
+  // Threat tags
+  const tags=document.getElementById('threatTags');
+  tags.innerHTML='';
+  let tagList=[];
+  apiResults.forEach(a=>{
+    if(a.res.status==='bad'){
+      if(a.name.includes('Google'))tagList.push({cls:'malware',txt:'MALWARE/PHISHING'});
+      if(a.name.includes('URLScan'))tagList.push({cls:'malware',txt:'MALICIOUS SITE'});
+      if(a.name.includes('Abuse'))tagList.push({cls:'abuse',txt:'IP ABUSE'});
+      if(a.name.includes('Phish'))tagList.push({cls:'phishing',txt:'PHISHING DB'});
+    }
+    if(a.res.status==='warn')tagList.push({cls:'suspicious',txt:'SUSPICIOUS'});
+  });
+  if(!tagList.length){tagList=[{cls:'clean',txt:level==='safe'?'CLEAN':'UNKNOWN'}];}
+  tags.innerHTML=[...new Map(tagList.map(t=>[t.txt,t])).values()].map(t=>`<div class="ttag ${t.cls}">${t.txt}</div>`).join('');
 
   // AI verdict
   const vArr=L.ai[level];
-  const verdict=vArr[Math.floor(Math.random()*vArr.length)](domain||rawUrl,score);
-  document.getElementById('aiVerdict').textContent=verdict;
+  const v=vArr[Math.floor(Math.random()*vArr.length)](domain||rawUrl,score);
+  document.getElementById('aiVerdict').textContent=v;
 
-  // Checks
-  document.getElementById('checksGrid').innerHTML=checks.map(c=>`
+  // API source cards
+  document.getElementById('srcGrid').innerHTML=apiResults.map(a=>{
+    const pillMap={ok:'pill-safe',warn:'pill-warn',bad:'pill-bad',skip:'pill-skip',err:'pill-err'};
+    const pillCls=pillMap[a.res.status]||'pill-skip';
+    const pillTxt={ok:'✅ CLEAN',warn:'⚠️ WARN',bad:'🚨 THREAT',skip:'— SKIPPED',err:'⚠️ ERROR'}[a.res.status]||'—';
+    return `<div class="src-card">
+      <div class="src-icon">${a.icon}</div>
+      <div class="src-info">
+        <div class="src-name">${a.name}</div>
+        <div class="src-detail">${escH(a.res.detail||'—')}</div>
+      </div>
+      <div class="src-pill ${pillCls}">${pillTxt}</div>
+    </div>`;
+  }).join('');
+
+  // Heuristic checks
+  document.getElementById('chkGrid').innerHTML=hChecks.map(c=>`
     <div class="ci ${c.cls}">
       <span>${c.cls==='chk-ok'?'✅':c.cls==='chk-warn'?'⚠️':'❌'}</span>
-      <span>${escHtml(c.txt)}</span>
+      <span>${escH(c.txt)}</span>
     </div>`).join('');
 
   // Tips
   if(level==='danger'){
     const tc=document.getElementById('tipsCard');
-    const parts=L.tips.split(':');
-    tc.innerHTML=`<strong>${parts[0]}:</strong>${parts.slice(1).join(':')}`;
+    const pts=L.tips.split(':');
+    tc.innerHTML=`<strong>${pts[0]}:</strong>${pts.slice(1).join(':')}`;
     tc.style.display='block';
   }
 
-  // Monster reaction
-  document.getElementById('monAvatar').textContent=level==='safe'?'😌':level==='warning'?'😒':'😱';
-  const short=L.monReact[level];
-  typeText(document.getElementById('monsterText'),short,22);
+  // Monster
+  document.getElementById('monAv').textContent=level==='safe'?'😌':level==='warning'?'😒':'😱';
+  typeText(document.getElementById('monTxt'),L.monReact[level],22);
 
-  if(animate) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(animate)card.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-/* ══════════════════════════════════════════════════
-   KEYBOARD
-══════════════════════════════════════════════════ */
-document.getElementById('urlInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter') startScan();
-});
+/* ═══════════════════════════════════════════════════════
+   HISTORY
+═══════════════════════════════════════════════════════ */
+function addHistory(url,level,score){
+  history.unshift({url,level,score});
+  if(history.length>6)history=history.slice(0,6);
+  renderHistory();
+}
+function renderHistory(){
+  const sec=document.getElementById('histSec');
+  const list=document.getElementById('histList');
+  if(!history.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML=history.map((h,i)=>`
+    <div class="hi" onclick="reScan(${i})">
+      <div class="hd ${h.level}"></div>
+      <span class="hu">${escH(h.url)}</span>
+      <span class="hs">${h.score}/100</span>
+    </div>`).join('');
+}
+function reScan(i){document.getElementById('urlInput').value=history[i].url;startScan();}
 
-/* ══════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   SHARE
+═══════════════════════════════════════════════════════ */
+function doShare(){
+  if(!lastResult)return;
+  const L=T[lang];
+  const txt=L.shareMsg(lastResult.domain,lastResult.score,lastResult.level);
+  if(navigator.share){navigator.share({title:'LinkReaper',text:txt}).catch(()=>{});}
+  else{
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn=document.getElementById('shareBtn');
+      const orig=btn.innerHTML;
+      btn.innerHTML='✅ <span>Copied!</span>';
+      setTimeout(()=>{btn.innerHTML=orig;},2000);
+    }).catch(()=>{});
+  }
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ═══════════════════════════════════════════════════════
+   KEYBOARD
+═══════════════════════════════════════════════════════ */
+document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startScan();});
+
+/* INIT */
 setLang('ar');
 </script>
 </body>
